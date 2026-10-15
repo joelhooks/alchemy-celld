@@ -1,0 +1,1025 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`default plan preserves baseline with structural storage alarms 1`] = `
+{
+  "celld-slice": {
+    "action": "create",
+    "bindings": [],
+    "downstream": [
+      "store/server",
+      "store/storage-retention",
+    ],
+    "props": {
+      "home": "/home/example",
+      "name": "celld.slice",
+      "scope": "user",
+      "sections": [
+        {
+          "lines": [
+            [
+              "MemoryMax",
+              "4G",
+            ],
+            [
+              "MemorySwapMax",
+              "0",
+            ],
+            [
+              "CPUQuota",
+              "300%",
+            ],
+            [
+              "TasksMax",
+              "2048",
+            ],
+          ],
+          "name": "Slice",
+        },
+      ],
+    },
+    "provider": {},
+  },
+  "celld/celld": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "celld/node",
+    ],
+    "props": {
+      "asset": {
+        "format": "gz",
+        "memberSha256": "810b2a0b70e3420daee80f1d5378de5ba28651f0371ec7aa70b6c5de77e70d9e",
+      },
+      "sha256": "79a8253cff5d4e8a4a9f7a2611e393390f7fe9025f00e88467875b007c44866b",
+      "size": 25122717,
+      "url": "https://github.com/denoland/celld/releases/download/v0.6.1/celld-x86_64-unknown-linux-gnu.gz",
+    },
+    "provider": {},
+  },
+  "celld/data": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "celld/node",
+    ],
+    "props": {
+      "mode": 448,
+      "purgeOnDelete": false,
+      "purgeRoot": "/srv/example/mailbox",
+    },
+    "provider": {},
+  },
+  "celld/environment": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "celld/node",
+    ],
+    "props": {
+      "mode": 384,
+      "rotationOwner": {
+        "home": "/home/example",
+        "name": "celld-celld.service",
+        "sha256": "ad5d0553f149a34373544c37676dccdf9ee92576bf64bb9cde912ccda8e16cf7",
+      },
+    },
+    "provider": {},
+  },
+  "celld/node": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [],
+    "props": {
+      "home": "/home/example",
+      "internalUrl": "http://127.0.0.1:31001",
+      "name": "celld-celld.service",
+      "prepared": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "publicUrl": "http://203.0.113.10:31000",
+      "restartOn": [
+        null,
+        null,
+      ],
+      "scope": "user",
+      "sections": [
+        {
+          "lines": [
+            [
+              "Description",
+              "Celld cell node",
+            ],
+            [
+              "Requires",
+              "celld-seaweedfs.service",
+            ],
+            [
+              "After",
+              "celld-seaweedfs.service",
+            ],
+            [
+              "StartLimitIntervalSec",
+              "0",
+            ],
+          ],
+          "name": "Unit",
+        },
+        {
+          "lines": [
+            [
+              "ExecStart",
+              ""/home/example/.local/share/celld/bin/celld" --listen 203.0.113.10:31000 --internal-listen 127.0.0.1:31001",
+            ],
+            [
+              "ExecStopPost",
+              "-/usr/bin/python3 "/home/example/.local/share/celld/bin/storage-maintenance.py" diagnose --instance "celld" --master http://127.0.0.1:31004 --filer http://127.0.0.1:31002 --root /topics/.system/log",
+            ],
+            [
+              "EnvironmentFile",
+              "/home/example/.config/celld/celld.env",
+            ],
+            [
+              "WorkingDirectory",
+              "/srv/example/mailbox/celld",
+            ],
+            [
+              "Environment",
+              "CELLD_OTEL=0",
+            ],
+            [
+              "Environment",
+              "CELLD_LTX_RETENTION_SECS=86400",
+            ],
+            [
+              "Environment",
+              "CELLD_SHUTDOWN_TOTAL_MS=8000",
+            ],
+            [
+              "Environment",
+              ""CELLD_TEST_DATA_DIR=/srv/example/mailbox/celld"",
+            ],
+            [
+              "Slice",
+              "celld.slice",
+            ],
+            [
+              "MemoryMax",
+              "3G",
+            ],
+            [
+              "MemorySwapMax",
+              "0",
+            ],
+            [
+              "CPUQuota",
+              "200%",
+            ],
+            [
+              "TasksMax",
+              "1024",
+            ],
+            [
+              "Nice",
+              "10",
+            ],
+            [
+              "Restart",
+              "on-failure",
+            ],
+            [
+              "RestartSec",
+              "10",
+            ],
+            [
+              "TimeoutStartSec",
+              "180",
+            ],
+            [
+              "UMask",
+              "0077",
+            ],
+          ],
+          "name": "Service",
+        },
+        {
+          "lines": [
+            [
+              "WantedBy",
+              "default.target",
+            ],
+          ],
+          "name": "Install",
+        },
+      ],
+      "version": "v0.6.1",
+    },
+    "provider": {},
+  },
+  "store/access-key": {
+    "action": "create",
+    "bindings": [],
+    "downstream": [
+      "store/identity",
+      "celld/environment",
+    ],
+    "props": {
+      "bytes": 16,
+    },
+    "provider": {},
+  },
+  "store/bin": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "store/weed",
+      "store/storage-maintenance",
+      "celld/celld",
+    ],
+    "props": {
+      "mode": 448,
+    },
+    "provider": {},
+  },
+  "store/binary-root": {
+    "action": "create",
+    "bindings": [],
+    "downstream": [
+      "store/bin",
+    ],
+    "props": {
+      "mode": 448,
+      "path": "/home/example/.local/share/celld",
+    },
+    "provider": {},
+  },
+  "store/bucket": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "celld/environment",
+      "celld/node",
+    ],
+    "props": {
+      "endpoint": "http://127.0.0.1:31006",
+      "name": "example-cells",
+      "purgeOnDelete": false,
+      "region": "us-east-1",
+    },
+    "provider": {},
+  },
+  "store/config-root": {
+    "action": "adopted",
+    "adopting": true,
+    "bindings": [],
+    "downstream": [
+      "store/identity",
+      "celld/environment",
+    ],
+    "props": {
+      "mode": 448,
+      "path": "/home/example/.config/celld",
+    },
+    "provider": {},
+    "state": {
+      "attr": {
+        "mode": 448,
+        "path": "/home/example/.config/celld",
+      },
+      "bindings": [],
+      "downstream": [
+        "store/identity",
+        "celld/environment",
+      ],
+      "fqn": "store/config-root",
+      "instanceId": "scratch",
+      "logicalId": "config-root",
+      "namespace": {
+        "Id": "store",
+      },
+      "props": {
+        "mode": 448,
+        "path": "/home/example/.config/celld",
+      },
+      "providerVersion": 0,
+      "removalPolicy": "destroy",
+      "resourceType": "LinuxHost.HostDirectory",
+      "status": "created",
+    },
+  },
+  "store/data": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "store/server",
+    ],
+    "props": {
+      "mode": 448,
+      "purgeOnDelete": false,
+      "purgeRoot": "/srv/example/mailbox",
+    },
+    "provider": {},
+  },
+  "store/data-root": {
+    "action": "create",
+    "bindings": [],
+    "downstream": [
+      "store/data",
+      "celld/data",
+    ],
+    "props": {
+      "mode": 448,
+      "path": "/srv/example/mailbox",
+    },
+    "provider": {},
+  },
+  "store/identity": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "store/server",
+      "store/bucket",
+    ],
+    "props": {
+      "mode": 384,
+      "rotationOwner": {
+        "home": "/home/example",
+        "name": "celld-seaweedfs.service",
+        "sha256": "09dda3e24eefea49cd4aba3c65b6ef07632f95b775cb146628fd92bc27463e26",
+      },
+    },
+    "provider": {},
+  },
+  "store/secret-key": {
+    "action": "create",
+    "bindings": [],
+    "downstream": [
+      "store/identity",
+      "celld/environment",
+    ],
+    "props": {
+      "bytes": 32,
+    },
+    "provider": {},
+  },
+  "store/server": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "store/storage-retention",
+      "store/bucket",
+    ],
+    "props": {
+      "home": "/home/example",
+      "name": "celld-seaweedfs.service",
+      "prepared": [
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      "restartOn": [
+        null,
+        null,
+      ],
+      "scope": "user",
+      "sections": [
+        {
+          "lines": [
+            [
+              "Description",
+              "Celld object storage",
+            ],
+            [
+              "StartLimitIntervalSec",
+              "0",
+            ],
+          ],
+          "name": "Unit",
+        },
+        {
+          "lines": [
+            [
+              "ExecStart",
+              ""/home/example/.local/share/celld/bin/weed" server -ip=127.0.0.1 -ip.bind=127.0.0.1 -filer.port=31002 -filer.port.grpc=31003 -master.port=31004 -master.port.grpc=31005 -s3.port=31006 -s3.port.grpc=31007 -volume.port=31008 -volume.port.grpc=31009 -filer -s3 -s3.port.iceberg=0 -s3.port.lance=0 -dir="/srv/example/mailbox/seaweedfs" -s3.config="/home/example/.config/celld/s3.json" -master.telemetry=false -metricsPort=0 -debug=false -volume.pprof=false -master.volumeSizeLimitMB=64 -volume.max=512",
+            ],
+            [
+              "WorkingDirectory",
+              "/srv/example/mailbox/seaweedfs",
+            ],
+            [
+              "Environment",
+              "SENTRY_DSN=",
+            ],
+            [
+              "Environment",
+              "OTEL_SDK_DISABLED=true",
+            ],
+            [
+              "Slice",
+              "celld.slice",
+            ],
+            [
+              "MemoryMax",
+              "3G",
+            ],
+            [
+              "MemorySwapMax",
+              "0",
+            ],
+            [
+              "CPUQuota",
+              "100%",
+            ],
+            [
+              "TasksMax",
+              "512",
+            ],
+            [
+              "Nice",
+              "10",
+            ],
+            [
+              "Restart",
+              "on-failure",
+            ],
+            [
+              "RestartSec",
+              "10",
+            ],
+            [
+              "UMask",
+              "0077",
+            ],
+          ],
+          "name": "Service",
+        },
+        {
+          "lines": [
+            [
+              "WantedBy",
+              "default.target",
+            ],
+          ],
+          "name": "Install",
+        },
+      ],
+    },
+    "provider": {},
+  },
+  "store/storage-maintenance": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "store/storage-retention",
+      "store/storage-retention-timer",
+      "celld/node",
+    ],
+    "props": {
+      "content": "import datetime
+import json
+import re
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("action", choices=("retain", "diagnose"))
+parser.add_argument("--instance", required=True)
+parser.add_argument("--master", required=True)
+parser.add_argument("--filer", required=True)
+parser.add_argument("--root", required=True)
+args = parser.parse_args()
+
+def target(value):
+    try:
+        url = urllib.parse.urlsplit(value)
+        port = url.port
+    except ValueError:
+        parser.error("invalid maintenance target")
+    if url.scheme != "http" or url.hostname != "127.0.0.1" or url.username is not None or url.password is not None or url.path not in ("", "/") or url.query or url.fragment or port is None or port <= 0:
+        parser.error("maintenance target must be an explicit loopback HTTP endpoint")
+    return value.rstrip("/")
+
+MASTER = target(args.master)
+FILER = target(args.filer)
+if args.root != "/topics/.system/log":
+    parser.error("maintenance root must be the metadata log root")
+ROOT = args.root
+sys.argv = [sys.argv[0], args.action]
+DAYS = 7
+THRESHOLD = 8
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise RuntimeError('storage diagnostic/retention refuses redirects')
+
+opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+
+def request(url, method='GET'):
+    req = urllib.request.Request(url, method=method, headers={'Accept': 'application/json'})
+    with opener.open(req, timeout=30) as response:
+        body = response.read(8 * 1024 * 1024 + 1)
+        if len(body) > 8 * 1024 * 1024:
+            raise RuntimeError('storage response too large')
+        result = json.loads(body) if body else {}
+        if result.get('error'):
+            raise RuntimeError('storage request failed: ' + str(result['error']))
+        return result
+
+def retention(call=request, now=None):
+    today = (now or datetime.datetime.now(datetime.timezone.utc)).date()
+    cutoff = today - datetime.timedelta(days=DAYS)
+    cursor = ''
+    targets = []
+    # Bound work and refuse incomplete or non-advancing listings before deleting.
+    for _ in range(100):
+        query = urllib.parse.urlencode({'limit': 1000, 'lastFileName': cursor})
+        try:
+            page = call(FILER + ROOT + '/?' + query)
+        except urllib.error.HTTPError as error:
+            if error.code == 404 and not cursor:
+                return 0
+            raise
+        if page.get('Path') != ROOT or not isinstance(page.get('Entries'), (list, type(None))):
+            raise RuntimeError('unexpected metadata log listing')
+        for entry in page['Entries'] or []:
+            path = entry.get('FullPath', '')
+            if not isinstance(path, str) or not re.fullmatch(re.escape(ROOT) + r'/[0-9]{4}-[0-9]{2}-[0-9]{2}', path):
+                continue
+            mode = entry.get('Mode', 0)
+            if not isinstance(mode, int) or not mode & (1 << 31):
+                continue
+            try:
+                date = datetime.date.fromisoformat(path[len(ROOT) + 1:])
+            except ValueError:
+                continue
+            if date < cutoff:
+                targets.append(path)
+        if page.get('ShouldDisplayLoadMore') is False:
+            break
+        next_cursor = page.get('LastFileName')
+        if not isinstance(next_cursor, str) or next_cursor <= cursor:
+            raise RuntimeError('non-advancing metadata log listing')
+        cursor = next_cursor
+    else:
+        raise RuntimeError('metadata log listing exceeded page budget')
+    for path in sorted(set(targets)):
+        call(FILER + path + '?recursive=true', 'DELETE')
+    return len(set(targets))
+
+def default_volume_count(call):
+    status = call(MASTER + '/vol/status')
+    if not isinstance(status, dict) or not isinstance(status.get('Version'), str) or not isinstance(status.get('Volumes'), dict):
+        raise RuntimeError('invalid volume status')
+    maximum, free = status['Volumes'].get('Max'), status['Volumes'].get('Free')
+    if type(maximum) is not int or type(free) is not int or maximum <= 0 or free < 0 or free > maximum:
+        raise RuntimeError('invalid volume slot counters')
+    centers = status['Volumes'].get('DataCenters')
+    if not isinstance(centers, dict):
+        raise RuntimeError('invalid volume data centers')
+    volumes = set()
+    for racks in centers.values():
+        if not isinstance(racks, dict):
+            raise RuntimeError('invalid volume racks')
+        for nodes in racks.values():
+            if not isinstance(nodes, dict):
+                raise RuntimeError('invalid volume nodes')
+            for entries in nodes.values():
+                if not isinstance(entries, list):
+                    raise RuntimeError('invalid volume entries')
+                for volume in entries:
+                    if not isinstance(volume, dict) or type(volume.get('Id')) is not int or volume['Id'] <= 0 or not isinstance(volume.get('Collection'), str):
+                        raise RuntimeError('invalid volume identity')
+                    replica, ttl = volume.get('ReplicaPlacement'), volume.get('Ttl')
+                    if not isinstance(replica, dict) or set(replica) - {'node', 'rack', 'dc'} or any(type(value) is not int or value < 0 or value > 9 for value in replica.values()):
+                        raise RuntimeError('invalid volume replication')
+                    if 100 * replica.get('dc', 0) + 10 * replica.get('rack', 0) + replica.get('node', 0) > 255:
+                        raise RuntimeError('invalid volume replication encoding')
+                    if not isinstance(ttl, dict) or set(ttl) != {'Count', 'Unit'} or type(ttl['Count']) is not int or not 0 <= ttl['Count'] <= 255 or type(ttl['Unit']) is not int or not 0 <= ttl['Unit'] <= 6:
+                        raise RuntimeError('invalid volume ttl')
+                    if volume['Collection'] == '' and not any(replica.values()) and (ttl['Count'] == 0 or ttl['Unit'] == 0):
+                        volumes.add(volume['Id'])
+    return len(volumes)
+
+def diagnostic(call=request):
+    topo = call(MASTER + '/dir/status')['Topology']
+    free, maximum = topo['Free'], topo['Max']
+    if type(free) is not int or type(maximum) is not int or maximum <= 0 or free < 0 or free > maximum:
+        raise RuntimeError('invalid storage slot counters')
+    layouts = topo['Layouts']
+    if layouts is None:
+        layouts = []
+    if not isinstance(layouts, list):
+        raise RuntimeError('invalid storage layouts')
+    writable = set()
+    for layout in layouts:
+        if not isinstance(layout, dict) or any(not isinstance(layout.get(key), str) for key in ('collection', 'replication', 'ttl')) or (layout.get('writables') is not None and not isinstance(layout.get('writables'), list)):
+            raise RuntimeError('invalid storage layout')
+        # Match the metadata log's default collection / replication / no TTL.
+        if layout['collection'] == '' and layout['replication'] == '000' and layout['ttl'] == '':
+            for volume in layout['writables'] or []:
+                if type(volume) is not int or volume <= 0:
+                    raise RuntimeError('invalid writable volume id')
+                writable.add(volume)
+    default_volumes = default_volume_count(call)
+    return {'freeVolumeSlots': free, 'maxVolumeSlots': maximum,
+            'defaultCollectionWritableVolumes': len(writable),
+            'alarm': free < THRESHOLD or (default_volumes > 0 and not writable),
+            'observedAt': datetime.datetime.now(datetime.timezone.utc).isoformat()}
+
+def main():
+    if sys.argv[1:] not in (['retain'], ['diagnose']):
+        raise RuntimeError('expected retain or diagnose')
+    if sys.argv[1] == 'retain':
+        print(json.dumps({'deletedLogDays': retention(), 'retentionDays': DAYS}), flush=True)
+    signal = diagnostic()
+    print(json.dumps(signal), flush=True)
+    if signal['freeVolumeSlots'] < THRESHOLD:
+        print('storage free-volume slots below threshold 8', file=sys.stderr, flush=True)
+    elif signal['alarm']:
+        print('storage has no writable volume in the default collection; node authority writes may fail', file=sys.stderr, flush=True)
+    elif not signal['defaultCollectionWritableVolumes']:
+        print('no writable default-collection volume yet; will grow on first write', file=sys.stderr, flush=True)
+    return 1 if signal['alarm'] else 0
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except Exception as error:
+        print(json.dumps({'alarm': True, 'diagnosticUnavailable': True, 'error': str(error)}), flush=True)
+        sys.exit(1)
+",
+      "mode": 384,
+    },
+    "provider": {},
+  },
+  "store/storage-retention": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "store/storage-retention-timer",
+    ],
+    "provider": {},
+  },
+  "store/storage-retention-timer": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [],
+    "provider": {},
+  },
+  "store/weed": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [
+      "store/server",
+    ],
+    "props": {
+      "asset": {
+        "format": "tar.gz",
+        "member": "weed",
+        "memberSha256": "8c07a1ccc4ec058cd90989ac0533c30436832e41c63de2b26f37253d9f744c4d",
+      },
+      "sha256": "4a7d108384d044d95212d1342cdda9533fa55842c1c9b41f606ca3c8a9561124",
+      "size": 46067365,
+      "url": "https://github.com/seaweedfs/seaweedfs/releases/download/4.48/linux_amd64.tar.gz",
+    },
+    "provider": {},
+  },
+}
+`;
+
+exports[`default rendered bytes preserve baseline with structural storage alarms 1`] = `
+{
+  "directories": [
+    "/home/example/.config/celld",
+    "/home/example/.local/share/celld",
+    "/home/example/.local/share/celld/bin",
+    "/srv/example/mailbox",
+    "/srv/example/mailbox/celld",
+    "/srv/example/mailbox/seaweedfs",
+  ],
+  "files": {
+    "/home/example/.config/celld/celld.env": "AWS_ACCESS_KEY_ID="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+AWS_SECRET_ACCESS_KEY="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+AWS_REGION=us-east-1
+S3_ENDPOINT="http://127.0.0.1:31006"
+CELLD_BUCKET="s3://example-cells"
+CELLD_OTEL=0
+",
+    "/home/example/.config/celld/s3.json": "{"identities":[{"actions":["Admin","Read","Write","List","Tagging"],"credentials":[{"accessKey":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","secretKey":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"name":"celld"}]}",
+    "/home/example/.config/systemd/user/celld-celld.service": "[Unit]
+Description=Celld cell node
+Requires=celld-seaweedfs.service
+After=celld-seaweedfs.service
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart="/home/example/.local/share/celld/bin/celld" --listen 203.0.113.10:31000 --internal-listen 127.0.0.1:31001
+ExecStopPost=-/usr/bin/python3 "/home/example/.local/share/celld/bin/storage-maintenance.py" diagnose --instance "celld" --master http://127.0.0.1:31004 --filer http://127.0.0.1:31002 --root /topics/.system/log
+EnvironmentFile=/home/example/.config/celld/celld.env
+WorkingDirectory=/srv/example/mailbox/celld
+Environment=CELLD_OTEL=0
+Environment=CELLD_LTX_RETENTION_SECS=86400
+Environment=CELLD_SHUTDOWN_TOTAL_MS=8000
+Environment="CELLD_TEST_DATA_DIR=/srv/example/mailbox/celld"
+Slice=celld.slice
+MemoryMax=3G
+MemorySwapMax=0
+CPUQuota=200%
+TasksMax=1024
+Nice=10
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=180
+UMask=0077
+
+[Install]
+WantedBy=default.target
+",
+    "/home/example/.config/systemd/user/celld-seaweedfs.service": "[Unit]
+Description=Celld object storage
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart="/home/example/.local/share/celld/bin/weed" server -ip=127.0.0.1 -ip.bind=127.0.0.1 -filer.port=31002 -filer.port.grpc=31003 -master.port=31004 -master.port.grpc=31005 -s3.port=31006 -s3.port.grpc=31007 -volume.port=31008 -volume.port.grpc=31009 -filer -s3 -s3.port.iceberg=0 -s3.port.lance=0 -dir="/srv/example/mailbox/seaweedfs" -s3.config="/home/example/.config/celld/s3.json" -master.telemetry=false -metricsPort=0 -debug=false -volume.pprof=false -master.volumeSizeLimitMB=64 -volume.max=512
+WorkingDirectory=/srv/example/mailbox/seaweedfs
+Environment=SENTRY_DSN=
+Environment=OTEL_SDK_DISABLED=true
+Slice=celld.slice
+MemoryMax=3G
+MemorySwapMax=0
+CPUQuota=100%
+TasksMax=512
+Nice=10
+Restart=on-failure
+RestartSec=10
+UMask=0077
+
+[Install]
+WantedBy=default.target
+",
+    "/home/example/.config/systemd/user/celld-storage-retention.service": "[Unit]
+Description=celld filer metadata log retention and storage alarm
+Requires=celld-seaweedfs.service
+After=celld-seaweedfs.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 "/home/example/.local/share/celld/bin/storage-maintenance.py" retain --instance "celld" --master http://127.0.0.1:31004 --filer http://127.0.0.1:31002 --root /topics/.system/log
+Slice=celld.slice
+MemoryMax=128M
+MemorySwapMax=0
+CPUQuota=10%
+TasksMax=32
+Nice=10
+UMask=0077
+TimeoutStartSec=10min
+Restart=no
+",
+    "/home/example/.config/systemd/user/celld-storage-retention.timer": "[Unit]
+Description=celld hourly filer log retention
+
+[Timer]
+OnCalendar=*-*-* *:15:00 UTC
+Persistent=true
+Unit=celld-storage-retention.service
+
+[Install]
+WantedBy=default.target
+",
+    "/home/example/.config/systemd/user/celld.slice": "[Slice]
+MemoryMax=4G
+MemorySwapMax=0
+CPUQuota=300%
+TasksMax=2048
+",
+    "/home/example/.local/share/celld/bin/celld": "pinned binary 79a8253cff5d4e8a4a9f7a2611e393390f7fe9025f00e88467875b007c44866b",
+    "/home/example/.local/share/celld/bin/storage-maintenance.py": "import datetime
+import json
+import re
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("action", choices=("retain", "diagnose"))
+parser.add_argument("--instance", required=True)
+parser.add_argument("--master", required=True)
+parser.add_argument("--filer", required=True)
+parser.add_argument("--root", required=True)
+args = parser.parse_args()
+
+def target(value):
+    try:
+        url = urllib.parse.urlsplit(value)
+        port = url.port
+    except ValueError:
+        parser.error("invalid maintenance target")
+    if url.scheme != "http" or url.hostname != "127.0.0.1" or url.username is not None or url.password is not None or url.path not in ("", "/") or url.query or url.fragment or port is None or port <= 0:
+        parser.error("maintenance target must be an explicit loopback HTTP endpoint")
+    return value.rstrip("/")
+
+MASTER = target(args.master)
+FILER = target(args.filer)
+if args.root != "/topics/.system/log":
+    parser.error("maintenance root must be the metadata log root")
+ROOT = args.root
+sys.argv = [sys.argv[0], args.action]
+DAYS = 7
+THRESHOLD = 8
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise RuntimeError('storage diagnostic/retention refuses redirects')
+
+opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+
+def request(url, method='GET'):
+    req = urllib.request.Request(url, method=method, headers={'Accept': 'application/json'})
+    with opener.open(req, timeout=30) as response:
+        body = response.read(8 * 1024 * 1024 + 1)
+        if len(body) > 8 * 1024 * 1024:
+            raise RuntimeError('storage response too large')
+        result = json.loads(body) if body else {}
+        if result.get('error'):
+            raise RuntimeError('storage request failed: ' + str(result['error']))
+        return result
+
+def retention(call=request, now=None):
+    today = (now or datetime.datetime.now(datetime.timezone.utc)).date()
+    cutoff = today - datetime.timedelta(days=DAYS)
+    cursor = ''
+    targets = []
+    # Bound work and refuse incomplete or non-advancing listings before deleting.
+    for _ in range(100):
+        query = urllib.parse.urlencode({'limit': 1000, 'lastFileName': cursor})
+        try:
+            page = call(FILER + ROOT + '/?' + query)
+        except urllib.error.HTTPError as error:
+            if error.code == 404 and not cursor:
+                return 0
+            raise
+        if page.get('Path') != ROOT or not isinstance(page.get('Entries'), (list, type(None))):
+            raise RuntimeError('unexpected metadata log listing')
+        for entry in page['Entries'] or []:
+            path = entry.get('FullPath', '')
+            if not isinstance(path, str) or not re.fullmatch(re.escape(ROOT) + r'/[0-9]{4}-[0-9]{2}-[0-9]{2}', path):
+                continue
+            mode = entry.get('Mode', 0)
+            if not isinstance(mode, int) or not mode & (1 << 31):
+                continue
+            try:
+                date = datetime.date.fromisoformat(path[len(ROOT) + 1:])
+            except ValueError:
+                continue
+            if date < cutoff:
+                targets.append(path)
+        if page.get('ShouldDisplayLoadMore') is False:
+            break
+        next_cursor = page.get('LastFileName')
+        if not isinstance(next_cursor, str) or next_cursor <= cursor:
+            raise RuntimeError('non-advancing metadata log listing')
+        cursor = next_cursor
+    else:
+        raise RuntimeError('metadata log listing exceeded page budget')
+    for path in sorted(set(targets)):
+        call(FILER + path + '?recursive=true', 'DELETE')
+    return len(set(targets))
+
+def default_volume_count(call):
+    status = call(MASTER + '/vol/status')
+    if not isinstance(status, dict) or not isinstance(status.get('Version'), str) or not isinstance(status.get('Volumes'), dict):
+        raise RuntimeError('invalid volume status')
+    maximum, free = status['Volumes'].get('Max'), status['Volumes'].get('Free')
+    if type(maximum) is not int or type(free) is not int or maximum <= 0 or free < 0 or free > maximum:
+        raise RuntimeError('invalid volume slot counters')
+    centers = status['Volumes'].get('DataCenters')
+    if not isinstance(centers, dict):
+        raise RuntimeError('invalid volume data centers')
+    volumes = set()
+    for racks in centers.values():
+        if not isinstance(racks, dict):
+            raise RuntimeError('invalid volume racks')
+        for nodes in racks.values():
+            if not isinstance(nodes, dict):
+                raise RuntimeError('invalid volume nodes')
+            for entries in nodes.values():
+                if not isinstance(entries, list):
+                    raise RuntimeError('invalid volume entries')
+                for volume in entries:
+                    if not isinstance(volume, dict) or type(volume.get('Id')) is not int or volume['Id'] <= 0 or not isinstance(volume.get('Collection'), str):
+                        raise RuntimeError('invalid volume identity')
+                    replica, ttl = volume.get('ReplicaPlacement'), volume.get('Ttl')
+                    if not isinstance(replica, dict) or set(replica) - {'node', 'rack', 'dc'} or any(type(value) is not int or value < 0 or value > 9 for value in replica.values()):
+                        raise RuntimeError('invalid volume replication')
+                    if 100 * replica.get('dc', 0) + 10 * replica.get('rack', 0) + replica.get('node', 0) > 255:
+                        raise RuntimeError('invalid volume replication encoding')
+                    if not isinstance(ttl, dict) or set(ttl) != {'Count', 'Unit'} or type(ttl['Count']) is not int or not 0 <= ttl['Count'] <= 255 or type(ttl['Unit']) is not int or not 0 <= ttl['Unit'] <= 6:
+                        raise RuntimeError('invalid volume ttl')
+                    if volume['Collection'] == '' and not any(replica.values()) and (ttl['Count'] == 0 or ttl['Unit'] == 0):
+                        volumes.add(volume['Id'])
+    return len(volumes)
+
+def diagnostic(call=request):
+    topo = call(MASTER + '/dir/status')['Topology']
+    free, maximum = topo['Free'], topo['Max']
+    if type(free) is not int or type(maximum) is not int or maximum <= 0 or free < 0 or free > maximum:
+        raise RuntimeError('invalid storage slot counters')
+    layouts = topo['Layouts']
+    if layouts is None:
+        layouts = []
+    if not isinstance(layouts, list):
+        raise RuntimeError('invalid storage layouts')
+    writable = set()
+    for layout in layouts:
+        if not isinstance(layout, dict) or any(not isinstance(layout.get(key), str) for key in ('collection', 'replication', 'ttl')) or (layout.get('writables') is not None and not isinstance(layout.get('writables'), list)):
+            raise RuntimeError('invalid storage layout')
+        # Match the metadata log's default collection / replication / no TTL.
+        if layout['collection'] == '' and layout['replication'] == '000' and layout['ttl'] == '':
+            for volume in layout['writables'] or []:
+                if type(volume) is not int or volume <= 0:
+                    raise RuntimeError('invalid writable volume id')
+                writable.add(volume)
+    default_volumes = default_volume_count(call)
+    return {'freeVolumeSlots': free, 'maxVolumeSlots': maximum,
+            'defaultCollectionWritableVolumes': len(writable),
+            'alarm': free < THRESHOLD or (default_volumes > 0 and not writable),
+            'observedAt': datetime.datetime.now(datetime.timezone.utc).isoformat()}
+
+def main():
+    if sys.argv[1:] not in (['retain'], ['diagnose']):
+        raise RuntimeError('expected retain or diagnose')
+    if sys.argv[1] == 'retain':
+        print(json.dumps({'deletedLogDays': retention(), 'retentionDays': DAYS}), flush=True)
+    signal = diagnostic()
+    print(json.dumps(signal), flush=True)
+    if signal['freeVolumeSlots'] < THRESHOLD:
+        print('storage free-volume slots below threshold 8', file=sys.stderr, flush=True)
+    elif signal['alarm']:
+        print('storage has no writable volume in the default collection; node authority writes may fail', file=sys.stderr, flush=True)
+    elif not signal['defaultCollectionWritableVolumes']:
+        print('no writable default-collection volume yet; will grow on first write', file=sys.stderr, flush=True)
+    return 1 if signal['alarm'] else 0
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except Exception as error:
+        print(json.dumps({'alarm': True, 'diagnosticUnavailable': True, 'error': str(error)}), flush=True)
+        sys.exit(1)
+",
+    "/home/example/.local/share/celld/bin/weed": "pinned binary 4a7d108384d044d95212d1342cdda9533fa55842c1c9b41f606ca3c8a9561124",
+  },
+}
+`;

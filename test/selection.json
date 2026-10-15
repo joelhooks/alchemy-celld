@@ -1,0 +1,88 @@
+{
+  "sourceCommit": "5ccaeb2",
+  "selection": "Top-level *.test.ts files without stacks/ imports.",
+  "sourceTopLevelFiles": 64,
+  "sourceUncoupledFiles": 32,
+  "retained": [
+    "adoption.test.ts",
+    "archive.test.ts",
+    "backup-cache.test.ts",
+    "bucket-recovery.test.ts",
+    "deployment-config.test.ts",
+    "deployment-file-adoption.test.ts",
+    "deployment-secret-provider.test.ts",
+    "deployment-secrets.test.ts",
+    "deployment-stage.test.ts",
+    "instance-bootstrap-custody.test.ts",
+    "instance-destroy.test.ts",
+    "instance-properties.test.ts",
+    "instance-service-limits.test.ts",
+    "instance-startup.test.ts",
+    "instance-teardown-probe.test.ts",
+    "instance.test.ts",
+    "lifecycle.test.ts",
+    "maintenance-targets.test.ts",
+    "operator-build.test.ts",
+    "partial-resource-read.test.ts",
+    "probe-receipts.test.ts",
+    "probe-runner.test.ts",
+    "provider.test.ts",
+    "render-units.test.ts",
+    "restart-classification.test.ts",
+    "startup.test.ts",
+    "storage-alarm.test.ts",
+    "storage-fresh-retention.test.ts",
+    "storage-maintenance.test.ts",
+    "storage-readiness.test.ts",
+    "store-node.test.ts"
+  ],
+  "omitted": {
+    "agent-runtime.test.ts": {
+      "tests": 6,
+      "reason": "Application identity, gateway, and Claude installation subjects removed from the provider."
+    }
+  },
+  "excludedStackSuites": [
+    "alarm-sources.test.ts",
+    "backup-archive.test.ts",
+    "backup-early-stop.test.ts",
+    "backup-phase.test.ts",
+    "backup-publication.test.ts",
+    "backup-recovery.test.ts",
+    "backup-restart.test.ts",
+    "config-doctor-digest.test.ts",
+    "digest-evidence.test.ts",
+    "fleet-config.test.ts",
+    "fleet-ops.test.ts",
+    "health-digest.test.ts",
+    "instance-alarm.test.ts",
+    "instance-compat.test.ts",
+    "instance-paging.test.ts",
+    "inventory.test.ts",
+    "issuer-doctor.test.ts",
+    "one-way-content.test.ts",
+    "one-way-literals.test.ts",
+    "one-way.test.ts",
+    "reader-heartbeats.test.ts",
+    "restart-coalescing.test.ts",
+    "restore-order.test.ts",
+    "sessions-backup-alarm.test.ts",
+    "ship-guard.test.ts",
+    "ship-judge.test.ts",
+    "ship-prune.test.ts",
+    "ship-unit-stage.test.ts",
+    "throwaway.test.ts",
+    "usage-boundaries.test.ts",
+    "usage-followup.test.ts",
+    "usage.test.ts"
+  ],
+  "added": {
+    "extraction.test.ts": {
+      "tests": 2,
+      "claims": [
+        "Explicit restart gating independent of instance identity.",
+        "Private inventory selects injected host facts."
+      ]
+    }
+  }
+}

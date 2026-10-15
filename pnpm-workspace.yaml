@@ -1,0 +1,34 @@
+packages:
+  - "."
+
+overrides:
+  "@effect/platform-node-shared": "4.0.1"
+  "@effect/sql-d1": "4.0.1"
+  "@effect/sql-sqlite-do": "4.0.1"
+  "@effect/vitest": "4.0.1"
+
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
+  protobufjs: true
+  workerd: true
+
+minimumReleaseAgeExclude:
+  - alchemy@2.0.0-beta.81
+  - effect@4.0.1
+  - "@effect/platform-node-shared@4.0.1"
+  - "@effect/sql-d1@4.0.1"
+  - "@effect/sql-sqlite-do@4.0.1"
+  - "@effect/vitest@4.0.1"
+  - "@cloudflare/workers-types@5.20261004.1"
+  - "@distilled.cloud/aws@1.0.0-rc.13"
+  - "@distilled.cloud/axiom@1.0.0-rc.13"
+  - "@distilled.cloud/cloudflare@1.0.0-rc.13"
+  - "@distilled.cloud/core@1.0.0-rc.13"
+  - "@distilled.cloud/fly-io@1.0.0-rc.13"
+  - "@distilled.cloud/hetzner@1.0.0-rc.13"
+  - "@distilled.cloud/neon@1.0.0-rc.13"
+  - "@distilled.cloud/planetscale@1.0.0-rc.13"
+  - "@distilled.cloud/prisma@1.0.0-rc.13"
+  - "@distilled.cloud/railway@1.0.0-rc.13"
+  - "@distilled.cloud/stripe@1.0.0-rc.13"

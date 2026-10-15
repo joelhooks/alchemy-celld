@@ -1,0 +1,21 @@
+- Package name: `alchemy-celld`.
+- Package version: `0.1.0`.
+- License: MIT; `LICENSE` and `LICENSE-homeflare-kit` contain the notices.
+- The Linux and release providers in `src/` adapt `taslabs-net/homeflare-kit` at `cf20298`; its MIT notice is retained in `LICENSE-homeflare-kit`.
+- Runtime dependencies: `@effect/platform-node@4.0.0`, `alchemy@2.0.0-beta.81`, `effect@4.0.1`, `esbuild@0.28.2`.
+- Development dependencies: `@effect/tsgo@0.45.0`, `@effect/vitest@4.0.1`, `@types/node@24.13.6`, `oxfmt@0.68.0`, `typescript@7.0.2`, `vitest@5.0.1`.
+- Node.js requirement: `>=24.18.0`; package manager: `pnpm@11.28.2`.
+- Target platform: Linux x86_64. The celld asset is `celld-x86_64-unknown-linux-gnu.gz`.
+- celld pin: `v0.6.1`; compressed SHA-256: `79a8253cff5d4e8a4a9f7a2611e393390f7fe9025f00e88467875b007c44866b`; extracted SHA-256: `810b2a0b70e3420daee80f1d5378de5ba28651f0371ec7aa70b6c5de77e70d9e`.
+- SeaweedFS pin: `4.48`; asset: `linux_amd64.tar.gz`; archive SHA-256: `4a7d108384d044d95212d1342cdda9533fa55842c1c9b41f606ca3c8a9561124`; `weed` SHA-256: `8c07a1ccc4ec058cd90989ac0533c30436832e41c63de2b26f37253d9f744c4d`.
+- `examples/stack.ts` composes `ObjectStore.Slice`, `ObjectStore.Bucket`, and `Celld.Node` with injected host inventory and SSH transport. Delete-time data purging is disabled in that example.
+- `examples/cli.ts` accepts `deploy`, `plan`, `diagnose`, `race`, `listeners`, `health`, `bootstrap`, `preflight`, `store-listeners`, `status`, `uid-probe`, and `bootstrap-check`.
+- Host inventory is a mode-`0600` JSON file selected by `FLEET_INVENTORY`; `examples/inventory.example.json` contains invented input values.
+- The example requires `FLEET_LIVE_NODE`, `FLEET_INSTANCE`, `FLEET_PORT_BASE`, `FLEET_RESTART_GATE`, `FLEET_BUCKET`, and an external `FLEET_STATE_DIR`.
+- Example environment command: `export FLEET_INVENTORY=/srv/example/inventory.json FLEET_LIVE_NODE=example FLEET_INSTANCE=example FLEET_PORT_BASE=33000 FLEET_RESTART_GATE=true FLEET_BUCKET=example-cells FLEET_STATE_DIR=/srv/example/alchemy-state`.
+- Install command from the package directory inside a parent workspace: `pnpm install --ignore-workspace`.
+- Check commands from the package directory: `pnpm check` and `pnpm test`.
+- Example read commands from the package directory: `pnpm example plan`, `pnpm example preflight`, `pnpm example diagnose`, `pnpm example health`, `pnpm example status`.
+- Example deploy command after host approval: `FLEET_START_APPROVED=true pnpm example deploy`.
+- Example bootstrap commands: `pnpm example bootstrap` and `pnpm example bootstrap-check`.
+- The race action additionally requires `FLEET_RACE_APPROVED=true`.

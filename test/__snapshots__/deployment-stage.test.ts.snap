@@ -1,0 +1,166 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`default staging paths, ids and bytes preserve main 920884e 1`] = `
+{
+  "celld-deployment-stage-configuration": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [],
+    "props": {
+      "content": "{"name":"invented"}",
+      "mode": 384,
+    },
+    "provider": {},
+  },
+  "celld-deployment-stage-directory": {
+    "action": "create",
+    "bindings": [],
+    "downstream": [
+      "celld-deployment-stage-worker",
+      "celld-deployment-stage-configuration",
+    ],
+    "props": {
+      "mode": 448,
+      "path": "/home/example/.config/celld/deployment",
+    },
+    "provider": {},
+  },
+  "celld-deployment-stage-worker": {
+    "action": "create",
+    "bindings": [],
+    "deferredAdoption": {
+      "adopt": false,
+    },
+    "downstream": [],
+    "props": {
+      "content": "export default {};",
+      "mode": 384,
+    },
+    "provider": {},
+  },
+}
+`;
+
+exports[`default staging paths, ids and bytes preserve main 920884e 2`] = `
+{
+  "directories": [
+    "/home/example/.config/celld/deployment",
+  ],
+  "files": {
+    "/home/example/.config/celld/deployment/worker.mjs": "export default {};",
+    "/home/example/.config/celld/deployment/wrangler.json": "{"name":"invented"}",
+  },
+}
+`;
+
+exports[`default staging paths, ids and bytes preserve main 920884e 3`] = `
+{
+  "celld-deployment-stage-configuration": {
+    "action": "update",
+    "adopting": false,
+    "bindings": [],
+    "downstream": [],
+    "props": {
+      "content": "{"name":"invented"}",
+      "mode": 384,
+      "path": "/home/example/.config/celld/deployment/wrangler.public.json",
+    },
+    "provider": {},
+    "state": {
+      "attr": {
+        "mode": 384,
+        "path": "/home/example/.config/celld/deployment/wrangler.json",
+        "sha256": "b2aedbcfbae0ea02ac38b3d043864f42765c31adcdaf0f717ca98184ca54f3ab",
+      },
+      "bindings": [],
+      "downstream": [],
+      "fqn": "celld-deployment-stage-configuration",
+      "instanceId": "scratch",
+      "logicalId": "celld-deployment-stage-configuration",
+      "props": {
+        "content": "{"name":"invented"}",
+        "mode": 384,
+        "path": "/home/example/.config/celld/deployment/wrangler.json",
+      },
+      "providerVersion": 0,
+      "removalPolicy": "destroy",
+      "resourceType": "LinuxHost.RemoteFile",
+      "status": "created",
+    },
+  },
+  "celld-deployment-stage-directory": {
+    "action": "noop",
+    "bindings": [],
+    "downstream": [
+      "celld-deployment-stage-worker",
+      "celld-deployment-stage-configuration",
+    ],
+    "provider": {},
+    "state": {
+      "attr": {
+        "mode": 448,
+        "path": "/home/example/.config/celld/deployment",
+      },
+      "bindings": [],
+      "downstream": [
+        "celld-deployment-stage-worker",
+        "celld-deployment-stage-configuration",
+      ],
+      "fqn": "celld-deployment-stage-directory",
+      "instanceId": "scratch",
+      "logicalId": "celld-deployment-stage-directory",
+      "props": {
+        "mode": 448,
+        "path": "/home/example/.config/celld/deployment",
+      },
+      "providerVersion": 0,
+      "removalPolicy": "destroy",
+      "resourceType": "LinuxHost.HostDirectory",
+      "status": "created",
+    },
+  },
+  "celld-deployment-stage-worker": {
+    "action": "noop",
+    "bindings": [],
+    "downstream": [],
+    "provider": {},
+    "state": {
+      "attr": {
+        "mode": 384,
+        "path": "/home/example/.config/celld/deployment/worker.mjs",
+        "sha256": "9f085b1079ab38f776bbb3930dfd067a838ca3e0483aff8625f88837e8ed964c",
+      },
+      "bindings": [],
+      "downstream": [],
+      "fqn": "celld-deployment-stage-worker",
+      "instanceId": "scratch",
+      "logicalId": "celld-deployment-stage-worker",
+      "props": {
+        "content": "export default {};",
+        "mode": 384,
+        "path": "/home/example/.config/celld/deployment/worker.mjs",
+      },
+      "providerVersion": 0,
+      "removalPolicy": "destroy",
+      "resourceType": "LinuxHost.RemoteFile",
+      "status": "created",
+    },
+  },
+}
+`;
+
+exports[`default staging paths, ids and bytes preserve main 920884e 4`] = `
+{
+  "directories": [
+    "/home/example/.config/celld/deployment",
+  ],
+  "files": {
+    "/home/example/.config/celld/deployment/worker.mjs": "export default {};",
+    "/home/example/.config/celld/deployment/wrangler.json": "{"name":"invented"}",
+    "/home/example/.config/celld/deployment/wrangler.public.json": "{"name":"invented"}",
+  },
+}
+`;

@@ -1,0 +1,43 @@
+{
+  "name": "alchemy-celld",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "src",
+    "examples",
+    "README.facts.md",
+    "LICENSE",
+    "LICENSE-homeflare-kit"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./HostInventory": "./src/host.ts",
+    "./offline": "./src/offline.ts"
+  },
+  "scripts": {
+    "example": "ALCHEMY_TELEMETRY_DISABLED=1 node examples/cli.ts",
+    "typecheck": "effect-tsgo patch && tsc --noEmit -p tsconfig.json",
+    "check": "pnpm typecheck && oxfmt --check src examples test *.json *.ts README.facts.md",
+    "test": "ALCHEMY_TELEMETRY_DISABLED=1 vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@effect/platform-node": "4.0.0",
+    "alchemy": "2.0.0-beta.81",
+    "effect": "4.0.1",
+    "esbuild": "0.28.2"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "0.45.0",
+    "@effect/vitest": "4.0.1",
+    "@types/node": "24.13.6",
+    "oxfmt": "0.68.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
+  },
+  "engines": {
+    "node": ">=24.18.0",
+    "pnpm": ">=11.1.2"
+  },
+  "packageManager": "pnpm@11.28.2"
+}

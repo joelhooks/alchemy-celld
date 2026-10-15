@@ -1,0 +1,15 @@
+{
+  "domains": ["example.invalid"],
+  "hosts": ["example"],
+  "ips": ["203.0.113.10"],
+  "nodes": {
+    "example": {
+      "dataRoot": "/srv/example/cells",
+      "home": "/home/example",
+      "ssh": "user@example.invalid",
+      "tailnetIPv4": "203.0.113.10"
+    }
+  },
+  "secretNames": ["example_credential"],
+  "sites": ["example"]
+}
