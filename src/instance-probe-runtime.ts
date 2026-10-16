@@ -72,7 +72,13 @@ export const runInstanceProbe = (
         JSON.stringify(
           renderUnits(
             { ...host, tailnetIPv4: "127.0.0.1" },
-            { dataRoot, instance: probeInstance, portBase: probePortBase, restartGate: true },
+            {
+              dataRoot,
+              instance: probeInstance,
+              portBase: probePortBase,
+              restartGate: true,
+              maintenanceGuard: { refuses: [] },
+            },
             probeUnitLimits,
           ),
           null,

@@ -146,6 +146,7 @@ it.effect(
             instance: "mischiefrb",
             portBase: 28_010,
             restartGate: true,
+            maintenanceGuard: { refuses: [] },
           },
           probeUnitLimits,
         ),

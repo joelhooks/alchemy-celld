@@ -1,15 +1,17 @@
 import * as Namespace from "alchemy/Namespace";
 import * as Output from "alchemy/Output";
 import { Random, RandomProvider } from "alchemy/Random";
-import { Effect, Layer, Redacted, Schema } from "effect";
+import { Effect, Layer, Redacted } from "effect";
 
 import { BucketProvider, BucketResource } from "./bucket-api.ts";
 import { refuse, textDigest } from "./files.ts";
 import { instanceStoreUnit } from "./instance-units.ts";
-import { InstanceNameSchema, validateInstance } from "./instance.ts";
-import type { InstanceProps } from "./instance.ts";
+import { validateInstanceName, validateInstance } from "./instance.ts";
+import type { InstanceAdoption, InstanceProps } from "./instance.ts";
 import type { Node } from "./inventory-schema.ts";
 import { renderMaintenanceScript } from "./maintenance-render.ts";
+import { validateMaintenanceGuard } from "./maintenance-guard.ts";
+import type { MaintenanceGuard } from "./maintenance-guard.ts";
 import { operatorBundle } from "./operator-build.ts";
 import { weedBinary } from "./pins.ts";
 import {
@@ -25,6 +27,7 @@ import { storageRetentionTimer, storageRetentionUnit } from "./storage-maintenan
 import { renderUnit } from "./systemd.ts";
 
 export interface SliceProps {
+  readonly adopt?: InstanceAdoption;
   readonly cpuQuota?: string;
   readonly home: string;
   readonly instance: string;
@@ -34,9 +37,7 @@ export interface SliceProps {
 
 export const Slice = (props: SliceProps) =>
   Effect.gen(function* slice() {
-    const instance = yield* Schema.decodeEffect(InstanceNameSchema)(props.instance).pipe(
-      Effect.mapError(() => refuse("Invalid slice instance.")),
-    );
+    const instance = yield* validateInstanceName(props.instance, props.adopt);
 
     return yield* SystemdUnit(
       `${instance}-slice`,
@@ -45,6 +46,7 @@ export const Slice = (props: SliceProps) =>
   });
 
 export interface StoreProps extends InstanceProps, ServiceLimits {
+  readonly maintenanceGuard: MaintenanceGuard;
   readonly dataRoot?: string;
   readonly host: Node;
   readonly name: string;
@@ -53,11 +55,13 @@ export interface StoreProps extends InstanceProps, ServiceLimits {
   readonly restartGateBundle?: string | undefined;
   readonly slice: Output.Output<string>;
   readonly volumeMax?: number;
+  readonly volumePreStopSeconds?: 0;
 }
 
 export const Bucket = (id: string, props: StoreProps) =>
   Effect.gen(function* bucket() {
     const { host } = props;
+    yield* validateMaintenanceGuard(props.maintenanceGuard);
     const layout = yield* validateInstance(host, props);
 
     if (
@@ -65,6 +69,28 @@ export const Bucket = (id: string, props: StoreProps) =>
       (!Number.isSafeInteger(props.volumeMax) || props.volumeMax < 1)
     ) {
       return yield* refuse("Invalid volume maximum.");
+    }
+
+    if (
+      props.restartGateBundle !== undefined &&
+      (!props.restartGate ||
+        typeof props.restartGateBundle !== "string" ||
+        props.restartGateBundle.trim().length === 0)
+    ) {
+      return yield* refuse(
+        "A restart-gate bundle must be nonblank and requires restartGate: true.",
+      );
+    }
+
+    if (
+      props.restartGateCommands !== undefined &&
+      (typeof props.restartGateBundle !== "string" || props.restartGateBundle.trim().length === 0)
+    ) {
+      return yield* refuse("Custom restart-gate commands require an explicit restart-gate bundle.");
+    }
+
+    if (props.volumePreStopSeconds !== undefined && props.volumePreStopSeconds !== 0) {
+      return yield* refuse("volumePreStopSeconds must be 0 when supplied.");
     }
 
     const root = yield* HostDirectory("binary-root", {
@@ -99,10 +125,6 @@ export const Bucket = (id: string, props: StoreProps) =>
       path: Output.interpolate`${bin.path}/weed`,
     });
 
-    if (!props.restartGate && props.restartGateBundle !== undefined) {
-      return yield* refuse("A restart-gate bundle requires restartGate: true.");
-    }
-
     const restartGateBundle = props.restartGate
       ? (props.restartGateBundle ??
         (yield* operatorBundle(new URL("instance-restart-gate.ts", import.meta.url).pathname)))
@@ -126,6 +148,7 @@ export const Bucket = (id: string, props: StoreProps) =>
       oomPolicy: props.oomPolicy,
       restartGate: gate !== undefined,
       volumeMax: props.volumeMax,
+      volumePreStopSeconds: props.volumePreStopSeconds,
     });
 
     const identity = yield* RemoteFile("identity", {

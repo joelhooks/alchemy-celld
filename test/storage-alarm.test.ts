@@ -135,6 +135,7 @@ it.effect.prop(
           instance: "mischief",
           portBase: 28_010,
           restartGate: false,
+          maintenanceGuard: { refuses: [] },
         },
       );
 

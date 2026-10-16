@@ -26,7 +26,12 @@ export const fixtureHost: Node = {
   tailnetIPv4: "203.0.113.10",
 };
 
-export const fixtureProps = { instance: "celld", portBase: 31_000, restartGate: false };
+export const fixtureProps = {
+  instance: "celld",
+  portBase: 31_000,
+  restartGate: false,
+  maintenanceGuard: { refuses: [] as const },
+};
 
 export const instanceLayout = (host: Node, props: Partial<InstanceProps> & { dataRoot?: string }) =>
   layoutFor(host, {

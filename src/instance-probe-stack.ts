@@ -40,6 +40,7 @@ export const instanceProbeProgram = (host: Node, dataRoot: string, purgeOnDelete
     });
 
     const bucket = yield* ObjectStore.Bucket("store", {
+      maintenanceGuard: { refuses: [] },
       ...probeUnitLimits.seaweed,
       dataRoot,
       host: { ...host, tailnetIPv4: "127.0.0.1" },

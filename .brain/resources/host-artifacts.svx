@@ -1,0 +1,72 @@
+---
+title: Instance Host Artifact Inventory
+---
+
+# Instance host artifact inventory
+
+Scope: the high-level `ObjectStore.Slice` + `ObjectStore.Bucket` + `Celld.Node` composition, followed by optional `Celld.Deployment` / `stageDeploymentFiles` and explicit probes. This is a source inventory, not a live-host audit or clearance to deploy. Arbitrary caller-declared `RemoteFile` / `SystemdUnit` resources and injected callbacks can add other paths and need their own inventory.
+
+Let `H` be the injected home, `I` the instance, and `D` the selected data root. Define `B = H/.local/share/I/bin`, `C = H/.config/I`, and `U = H/.config/systemd/user`.
+
+## Permanent regular files
+
+The core composition manages **11 regular files with restart gating, 10 without**. Count is five unit/timer files plus two binaries, two credential/config files, one maintenance script, and the conditional gate bundle.
+
+| Managed path | Mode | What determines its bytes | How a consumer can hold bytes stable |
+| --- | --- | --- | --- |
+| `U/I.slice` | `0644` | Package unit renderer plus instance and resource limits. | Compare the full rendered unit. No high-level raw unit-text injection; lower-level `SystemdUnit` accepts caller declarations. |
+| `U/I-seaweedfs.service` | `0644` | Package renderer plus host/layout, complete ports, limits, restart-gate settings, volume cap and optional pre-stop flag. | Compare the full unit. Inject complete gate commands when preserving custom argv. `volumePreStopSeconds` is absent unless explicitly set to zero. |
+| `U/I-celld.service` | `0644` | Package renderer plus host/layout, complete ports, limits and gate settings. | Compare the full unit. Complete gate-command injection preserves its pre/post command values, not every other unit directive. |
+| `U/I-storage-retention.service` | `0644` | Package template plus instance, maintenance-script path and master/filer ports. | Compare the full unit. No high-level whole-unit injection. |
+| `U/I-storage-retention.timer` | `0644` | Package timer template plus instance. The schedule is package code. | Compare the full unit. No high-level whole-unit injection. |
+| `B/weed` | `0755` | SeaweedFS release pin in `src/pins.ts`, verified archive/member digests, and the fetched release bytes. | Verify the installed digest against the package pin. The high-level store does not accept an alternate binary pin. `ReleaseBinary` is available for caller-owned lower-level compositions; `ReleaseSource` cannot bypass digest verification. |
+| `B/celld` | `0755` | celld release pin in `src/pins.ts`, verified compressed/member digests, and the fetched release bytes. | Verify the installed digest against the package pin. Same injection limits as `weed`. |
+| `B/restart-gate.mjs` (only with gating) | `0600` | By default the package helper source plus its bundled dependency/toolchain revision. With `restartGateBundle`, exactly the injected UTF-8 text. | Inject the pre-built bundle to preserve a pinned artifact. It is not rebuilt, minified or newline-normalized. Custom commands require an explicit bundle; blank/invalid bundles and disabled-gate combinations fail. |
+| `B/storage-maintenance.py` | `0600` | Package Python prelude/configuration/implementation, plus the required maintenance-guard declaration. The path depends on layout; most script contents are revision-dependent, not props-only. | Inject structured protected-port/exemption data to reproduce the canonical guard blocks, or explicitly declare `maintenanceGuard: { refuses: [] }`. Compare the **entire script**, not just those blocks. There is no whole-script byte injection. This one file implements both `retain` and `diagnose`; there is no separate installed retention Python script. |
+| `C/s3.json` | `0600` | Package JSON serializer and fixed action list, instance name, and persisted Alchemy `Random` access/secret outputs. | Preserve the random-resource state and compare exact bytes. These bytes are **not determined only by injected host props**. High-level composition has no whole-file override. Do not regenerate credentials to make a render match. |
+| `C/celld.env` | `0600` | Package key names/order/quoting, bucket name/endpoint, fixed region/telemetry values, and the same persisted random credentials. | Preserve random state and compare exact bytes. High-level composition has no whole-file override. |
+
+Sources: `src/object-store.ts`, `src/celld.ts`, `src/service-units.ts`, `src/instance-units.ts`, `src/storage-maintenance.ts`, `src/maintenance-render.ts`, `src/storage-maintenance-script.ts`, `src/pins.ts`, `src/release.ts`, `src/systemd.ts`, `src/instance-files.ts`.
+
+### Optional deployment files
+
+| Managed path | Mode | What determines its bytes | Stability requirement |
+| --- | --- | --- | --- |
+| `C/deployment/worker.mjs` (or `DeploymentProps.directory/worker.mjs`) | `0600` | Exactly the injected deployment bundle string at the provider boundary. Upstream `prepareDeployment` / `workerBundle` output depends on source and the build toolchain. | Inject the pre-built worker string and compare its bytes. |
+| `C/deployment/wrangler.json` **or** `wrangler.public.json` | `0600` | Exactly the injected configuration string when staged/written. `stageDeploymentFiles` chooses the name from its `publicConfiguration` flag; `Deployment` chooses it from `bindingsFile` presence. | Inject the intended configuration string, use the correct filename branch, and compare bytes. |
+| `DeploymentProps.directory/wrangler.json` when private bindings are enabled | `0600` | Package Python binding-generation serializer, staged public configuration, and the external binding JSON contents. | Compare the merged output too. It is not merely the staged public file and is not props-only with respect to serializer revisions. |
+
+`bindingsFile` and `environmentFile` are consumed by `Deployment`; that provider does not create those input files. The high-level node creates `C/celld.env` separately. Unknown caller files in `C` are not owned simply because they share the directory.
+
+Sources: `src/deployment-stage.ts`, `src/deployment.ts`, `src/deployment-build.ts`, `src/worker-bundle.ts`.
+
+## Directories and enable links
+
+The composition declares mode-`0700` directories `H/.local/share/I`, `B`, `C`, `D`, `D/seaweedfs`, and `D/celld`. Optional deployment staging declares its directory at mode `0700`.
+
+`systemctl --user enable` can create these links for the default enabled declarations:
+
+- `U/default.target.wants/I.slice` -> `U/I.slice`.
+- `U/default.target.wants/I-seaweedfs.service` -> `U/I-seaweedfs.service`.
+- `U/default.target.wants/I-celld.service` -> `U/I-celld.service`.
+- `U/timers.target.wants/I-storage-retention.timer` -> `U/I-storage-retention.timer`.
+
+The retention service is disabled as a standalone unit and is triggered by the timer. Link targets depend on declarations; link creation and manager metadata are systemd operations, not additional rendered script bytes. The user-unit directory and other ancestor directories are not additional regular-file resources.
+
+Sources: `src/object-store.ts`, `src/celld.ts`, `src/storage-maintenance.ts`, `src/systemd.ts`, `src/unit-cleanup.ts`.
+
+## Transient and runtime artifacts
+
+- Each `HostShell.write` uses an adjacent `target.XXXXXX` `mktemp` file, streams the final bytes into it, sets mode, and renames it onto the target. The exit trap removes an unrenamed temporary file. This applies to units, binaries, helper/config files and direct deployment writes. Temporary names are nondeterministic; payload bytes are the final target's bytes. Source: `src/ssh.ts`.
+- An explicit `bootstrapProbe` creates `C/bootstrap-<UUID>/index.js` and `wrangler.json` at mode `0600` in a mode-`0700` directory. Worker bytes come from package `bootstrap-worker.js`; config bytes come from the package probe template. Cleanup removes both files and the directory, including on failure. Running the probe also asks celld to deploy that worker, which has runtime state outside those temporary config files. Source: `src/instance-probes.ts`.
+- Release downloads and decompression occur in memory on the controller; the provider installs the verified executable, not a host-side release archive. Sources: `src/release.ts`, `src/tar.ts`.
+- S3 requests, readiness writes, restores and worker deploys change service-owned state. The binaries create their own live data under `D/seaweedfs` and `D/celld`, sockets and OS runtime state. Those changing runtime contents are **not an enumerable static render manifest** and must not be treated as immutable config artifacts.
+- A restore archive at `D/.mailbox-restore-objects.tar` may be supplied externally and consumed/removed by the startup layer. The package startup path does not create it. Arbitrary injected restore callbacks can write additional paths and require a separate caller audit. Source: `src/instance-startup-contract.ts`.
+- Other helper scripts (`s3Script`, archive/cache helpers, rotation and cleanup scripts) run through command arguments such as `python3 -c`; they are not additional installed script-file resources in this composition.
+- Alchemy state and build/controller caches are separate from per-instance host files. A controller running on the same physical host does not make those files part of this instance's declared host artifact set.
+
+## No-op proof boundary
+
+There are **no core generated units/configs that are safely described as independent of package revision**. Exact text templates and serializers are code. The gate and deployment input strings have byte-preserving injection seams, while maintenance has structured guard injection but still a revision-dependent script body. Binary pins, existing random-resource state, modes, directories, links, and runtime/service state also need their own checks.
+
+A clean local snapshot proves the local default fixture's render, not a deployed consumer's artifacts. The consumer owner must compare every applicable permanent artifact and its mode against the host, preserve deliberately retained input files, and stop on any difference before a deployment clearance.

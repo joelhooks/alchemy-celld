@@ -2,6 +2,8 @@ import { instanceLayout } from "./instance.ts";
 import type { InstanceProps } from "./instance.ts";
 import type { Node } from "./inventory-schema.ts";
 import { assertMaintenanceIsolation, maintenanceArguments } from "./maintenance-targets.ts";
+import { maintenanceGuardBlocks } from "./maintenance-guard.ts";
+import type { MaintenanceProps } from "./maintenance-guard.ts";
 import { maintenanceImplementation, maintenancePrelude } from "./storage-maintenance-script.ts";
 
 const configuration = String.raw`import argparse
@@ -34,14 +36,27 @@ sys.argv = [sys.argv[0], args.action]
 
 export const renderMaintenanceScript = (
   host: Node,
-  props: InstanceProps & { readonly dataRoot?: string },
+  props: InstanceProps & MaintenanceProps & { readonly dataRoot?: string },
 ) => {
   const layout = instanceLayout(host, props);
 
-  const text = maintenancePrelude + configuration + maintenanceImplementation;
+  const guard = maintenanceGuardBlocks(props.maintenanceGuard);
+  const selected =
+    guard === undefined
+      ? configuration
+      : configuration
+          .replace(
+            "args = parser.parse_args()\n",
+            `args = parser.parse_args()\n${guard.declaration}\n`,
+          )
+          .replace(
+            '    return value.rstrip("/")',
+            `${guard.condition}\n    return value.rstrip("/")`,
+          );
+  const text = maintenancePrelude + selected + maintenanceImplementation;
 
   maintenanceArguments(layout);
-  assertMaintenanceIsolation(layout, text);
+  assertMaintenanceIsolation(layout, text, "script");
 
   return { path: `${layout.bin}/storage-maintenance.py`, text };
 };

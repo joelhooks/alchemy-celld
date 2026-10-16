@@ -10,7 +10,7 @@ const Instance = Schema.Struct({
 });
 
 it.prop(
-  "every rendered store unit carries preStopSeconds=0 on its ExecStart",
+  "store preStopSeconds is absent by default and rendered only for explicit opt-in",
   [Arbitrary.schema(Instance)],
   ([{ gate, volume }]) => {
     const host = {
@@ -22,12 +22,30 @@ it.prop(
 
     const store = renderUnits(
       host,
-      { instance: "example", portBase: 33_000, restartGate: gate },
-      { seaweed: { restartGate: gate, volumeMax: volume } },
+      {
+        instance: "example",
+        portBase: 33_000,
+        restartGate: gate,
+        maintenanceGuard: { refuses: [] },
+      },
+      { seaweed: { restartGate: gate, volumeMax: volume, volumePreStopSeconds: 0 } },
     ).find((unit) => unit.path.endsWith("-seaweedfs.service"));
 
     const exec = store?.text.split("\n").find((line) => line.startsWith("ExecStart="));
 
-    expect(exec).toContain(" -volume.preStopSeconds=0");
+    expect(exec).toContain(` -volume.max=${volume} -volume.preStopSeconds=0`);
+
+    const baseline = renderUnits(
+      host,
+      {
+        instance: "example",
+        portBase: 33_000,
+        restartGate: gate,
+        maintenanceGuard: { refuses: [] },
+      },
+      { seaweed: { restartGate: gate, volumeMax: volume } },
+    ).find((unit) => unit.path.endsWith("-seaweedfs.service"));
+    expect(baseline?.text).not.toContain("preStopSeconds");
+    expect(baseline?.text).toContain(` -volume.max=${volume}`);
   },
 );

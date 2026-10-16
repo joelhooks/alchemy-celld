@@ -4,7 +4,7 @@ import { Config, Effect, Schema } from "effect";
 import { AbsolutePath, refuse } from "./files.ts";
 import { assertStarted, stopUnits } from "./instance-startup-contract.ts";
 import { waitForStorage } from "./instance-storage-readiness.ts";
-import { InstanceNameSchema, PortBaseSchema, instanceLayout } from "./instance.ts";
+import { RestartGateContextSchema, PortBaseSchema, validateInstance } from "./instance.ts";
 import { localExec } from "./local-exec.ts";
 
 const program = Effect.gen(function* restartGate() {
@@ -14,7 +14,8 @@ const program = Effect.gen(function* restartGate() {
     Schema.Literals(["store", "node", "before-node"]),
   )(process.argv[3]);
 
-  const instance = yield* Schema.decodeUnknownEffect(InstanceNameSchema)(process.argv[4]);
+  // The complete context below determines strict-new-name versus explicit adoption validation.
+  const instance = yield* Schema.decodeUnknownEffect(Schema.String)(process.argv[4]);
 
   const portBase = yield* Schema.decodeUnknownEffect(PortBaseSchema)(Number(process.argv[5]));
 
@@ -22,9 +23,17 @@ const program = Effect.gen(function* restartGate() {
 
   const home = yield* Config.String("HOME");
 
-  const layout = instanceLayout(
+  const contextArgument = process.argv[7];
+  const context =
+    contextArgument === undefined
+      ? {}
+      : yield* Schema.decodeEffect(Schema.fromJsonString(RestartGateContextSchema), {
+          onExcessProperty: "error",
+        })(contextArgument).pipe(Effect.mapError(() => refuse("Invalid restart-gate context.")));
+
+  const layout = yield* validateInstance(
     { dataRoot, home, ssh: "unused", tailnetIPv4: address },
-    { dataRoot, instance, portBase, restartGate: true },
+    { dataRoot, instance, portBase, restartGate: true, ...context },
   );
 
   const shell = yield* localExec;

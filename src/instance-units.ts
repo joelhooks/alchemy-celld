@@ -1,7 +1,9 @@
+import { refuse } from "./files.ts";
 import { instanceLayout } from "./instance.ts";
 import type { InstanceLayout, InstanceProps } from "./instance.ts";
 import type { Node } from "./inventory-schema.ts";
 import { renderMaintenanceScript } from "./maintenance-render.ts";
+import type { MaintenanceProps } from "./maintenance-guard.ts";
 import { assertMaintenanceIsolation } from "./maintenance-targets.ts";
 import { nodeUnit, sliceUnit, storeUnit } from "./service-units.ts";
 import type { ServiceLimits } from "./service-units.ts";
@@ -16,6 +18,7 @@ export interface NodeUnitLimits extends ServiceLimits {
 export interface StoreUnitLimits extends ServiceLimits {
   readonly restartGate?: boolean | undefined;
   readonly volumeMax?: number | undefined;
+  readonly volumePreStopSeconds?: 0 | undefined;
 }
 
 export interface UnitRenderLimits {
@@ -74,14 +77,22 @@ export const instanceStoreUnit = (
         : undefined,
     restartOn: [],
     volumeMax: limits.volumeMax,
+    volumePreStopSeconds: limits.volumePreStopSeconds,
   });
 
 export const renderUnits = (
   host: Node,
-  props: InstanceProps & { readonly dataRoot?: string },
+  props: InstanceProps & MaintenanceProps & { readonly dataRoot?: string },
   limits: UnitRenderLimits = {},
 ): readonly { readonly path: string; readonly text: string }[] => {
   const layout = instanceLayout(host, props);
+  if (
+    layout.restartGateCommands !== undefined &&
+    (!(limits.celld?.restartGate ?? layout.restartGate) ||
+      !(limits.seaweed?.restartGate ?? layout.restartGate))
+  ) {
+    throw refuse("Custom restart-gate commands cannot be partially disabled by unit limits.");
+  }
 
   renderMaintenanceScript(host, props);
 

@@ -27,6 +27,7 @@ it.prop(
       instance: "mischief",
       portBase: port,
       restartGate: false,
+      maintenanceGuard: { refuses: [] as const },
     };
 
     const layout = instanceLayout(host, props);
@@ -120,6 +121,7 @@ it.effect.prop(
         instance: "mischief",
         portBase: base,
         restartGate: false,
+        maintenanceGuard: { refuses: [] },
       });
 
       const result = yield* executor.exec(["python3", "-c", fixture, script.text, String(base)]);

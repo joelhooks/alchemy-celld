@@ -17,6 +17,7 @@ export const mischief = (host: Node) =>
     });
 
     const bucket = yield* ObjectStore.Bucket("store", {
+      maintenanceGuard: { refuses: [] },
       cpuQuota: "100%",
       dataRoot: "/srv/example/mischief",
       host,

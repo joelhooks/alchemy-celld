@@ -373,7 +373,7 @@ exports[`default plan preserves baseline with structural storage alarms 1`] = `
       "rotationOwner": {
         "home": "/home/example",
         "name": "celld-seaweedfs.service",
-        "sha256": "51a4a3b29a553b40e59961ef3af0b47b0c56a4633208ff314c11cb7e5ced45e7",
+        "sha256": "09dda3e24eefea49cd4aba3c65b6ef07632f95b775cb146628fd92bc27463e26",
       },
     },
     "provider": {},
@@ -433,7 +433,7 @@ exports[`default plan preserves baseline with structural storage alarms 1`] = `
           "lines": [
             [
               "ExecStart",
-              ""/home/example/.local/share/celld/bin/weed" server -ip=127.0.0.1 -ip.bind=127.0.0.1 -filer.port=31002 -filer.port.grpc=31003 -master.port=31004 -master.port.grpc=31005 -s3.port=31006 -s3.port.grpc=31007 -volume.port=31008 -volume.port.grpc=31009 -filer -s3 -s3.port.iceberg=0 -s3.port.lance=0 -dir="/srv/example/mailbox/seaweedfs" -s3.config="/home/example/.config/celld/s3.json" -master.telemetry=false -metricsPort=0 -debug=false -volume.pprof=false -master.volumeSizeLimitMB=64 -volume.max=512 -volume.preStopSeconds=0",
+              ""/home/example/.local/share/celld/bin/weed" server -ip=127.0.0.1 -ip.bind=127.0.0.1 -filer.port=31002 -filer.port.grpc=31003 -master.port=31004 -master.port.grpc=31005 -s3.port=31006 -s3.port.grpc=31007 -volume.port=31008 -volume.port.grpc=31009 -filer -s3 -s3.port.iceberg=0 -s3.port.lance=0 -dir="/srv/example/mailbox/seaweedfs" -s3.config="/home/example/.config/celld/s3.json" -master.telemetry=false -metricsPort=0 -debug=false -volume.pprof=false -master.volumeSizeLimitMB=64 -volume.max=512",
             ],
             [
               "WorkingDirectory",
@@ -789,7 +789,7 @@ Description=Celld object storage
 StartLimitIntervalSec=0
 
 [Service]
-ExecStart="/home/example/.local/share/celld/bin/weed" server -ip=127.0.0.1 -ip.bind=127.0.0.1 -filer.port=31002 -filer.port.grpc=31003 -master.port=31004 -master.port.grpc=31005 -s3.port=31006 -s3.port.grpc=31007 -volume.port=31008 -volume.port.grpc=31009 -filer -s3 -s3.port.iceberg=0 -s3.port.lance=0 -dir="/srv/example/mailbox/seaweedfs" -s3.config="/home/example/.config/celld/s3.json" -master.telemetry=false -metricsPort=0 -debug=false -volume.pprof=false -master.volumeSizeLimitMB=64 -volume.max=512 -volume.preStopSeconds=0
+ExecStart="/home/example/.local/share/celld/bin/weed" server -ip=127.0.0.1 -ip.bind=127.0.0.1 -filer.port=31002 -filer.port.grpc=31003 -master.port=31004 -master.port.grpc=31005 -s3.port=31006 -s3.port.grpc=31007 -volume.port=31008 -volume.port.grpc=31009 -filer -s3 -s3.port.iceberg=0 -s3.port.lance=0 -dir="/srv/example/mailbox/seaweedfs" -s3.config="/home/example/.config/celld/s3.json" -master.telemetry=false -metricsPort=0 -debug=false -volume.pprof=false -master.volumeSizeLimitMB=64 -volume.max=512
 WorkingDirectory=/srv/example/mailbox/seaweedfs
 Environment=SENTRY_DSN=
 Environment=OTEL_SDK_DISABLED=true

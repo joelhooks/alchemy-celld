@@ -52,7 +52,12 @@ const { test } = Test.make({
 });
 
 const mailbox = Effect.gen(function* mailbox() {
-  const props = { instance: "celld", portBase: 31_000, restartGate: false };
+  const props = {
+    instance: "celld",
+    portBase: 31_000,
+    restartGate: false,
+    maintenanceGuard: { refuses: [] as const },
+  };
   const slice = yield* ObjectStore.Slice({ home: host.home, instance: props.instance });
 
   const bucket = yield* ObjectStore.Bucket("store", {
@@ -168,6 +173,7 @@ renderTest.provider(
         instance: "mischief",
         portBase: 32_000,
         restartGate: true,
+        maintenanceGuard: { refuses: [] },
       });
 
       expect(surface.files[maintenance.path]).toBe(maintenance.text);

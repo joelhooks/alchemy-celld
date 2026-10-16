@@ -47,14 +47,29 @@ export type { SliceProps, StoreProps } from "./object-store.ts";
 
 export {
   InstanceNameSchema,
+  InstancePortsSchema,
+  InstanceAdoptionSchema,
+  RestartGateCommandsSchema,
   PortBaseSchema,
   instanceLayout,
   validateInstance,
 } from "./instance.ts";
 
-export type { InstanceLayout, InstanceName, InstanceProps, PortBase } from "./instance.ts";
+export type {
+  InstanceLayout,
+  InstanceName,
+  InstancePorts,
+  InstanceAdoption,
+  InstanceProps,
+  RestartGateCommands,
+  PortBase,
+} from "./instance.ts";
 
 export { renderMaintenanceScript } from "./maintenance-render.ts";
+
+export { MaintenanceGuardSchema } from "./maintenance-guard.ts";
+
+export type { MaintenanceGuard, MaintenanceProps } from "./maintenance-guard.ts";
 
 export { MaintenanceRenderError } from "./maintenance-targets.ts";
 

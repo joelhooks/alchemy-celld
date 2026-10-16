@@ -16,12 +16,29 @@ The supported consumer contract is the explicit root API in `src/index.ts`. The 
 - Use package self-reference in examples. Do not bypass exports with relative source imports or TypeScript path aliases.
 - Preserve the TypeScript-source distribution. Native Node consumer proof uses workspace links. An installed tarball requires a TypeScript-capable bundler or loader, not Node's built-in stripping under `node_modules`.
 - Keep this repository local: no remote, no push, no publication.
-- Preserve the downstream owner's weed unit contract: append `-volume.preStopSeconds=0` immediately after `-volume.max`. `renderUnits` was already public. The property test imports it from `alchemy-celld` and supplies the explicit instance props required by this extraction. Two command representations and their resulting digest change in the instance snapshots; no compatibility snapshot exists in this tree.
+- Weed pre-stop behavior is opt-in: `volumePreStopSeconds: 0` appends the flag after `volume.max`; omission renders no pre-stop flag. This supersedes the owner's earlier unconditional-flag instruction. `renderUnits` was already public. Its generated-input property now pins both arms. The default instance snapshots are byte-identical to the extraction baseline; no compatibility snapshot exists here.
+- Optional `ports` is a complete ten-field, integer port map. Reject partial, malformed and extra-key maps. Keep the uniform block when absent. No deployment-specific map belongs in this package.
+- Existing names use explicit `adopt: { name, acceptsNestedSlice: true }`, validated separately and matched to `instance`. Its 16-character bound preserves the existing owner-unit and credential-rotation schemas. New-instance schema remains strict. Propagate adoption through Slice, Bucket, Node, and the default helper.
+- Complete `restartGateCommands: { beforeNode, node, store }` strings render verbatim, reject blank values/newlines/carriage returns/NUL, and require both restart gating and an explicit bundle in Bucket. Default generated commands remain topology-explicit. A JSON context transports non-uniform ports and adoption to the helper; it never infers real topology.
+- Maintenance-producing paths require `maintenanceGuard`: either structured `{ base, offsets, exemptInstance }` or explicit `{ refuses: [] }`. Omission and partial declarations fail closed. The empty form is an empty-tuple type, not an alternate nonempty port-list API. The renderer emits the canonical Python set-comprehension and exemption guard from data; the script isolation assertion verifies both blocks. Pure layout construction carries optional guard metadata without rendering maintenance.
+- The artifact inventory is `.brain/resources/host-artifacts.svx`: eleven core regular files with gating, ten without, plus conditional deployment/probe files, links and transient writes. Revision-dependent serializers and persisted credential state require complete byte comparison, not just unit comparison. No whole credential-file override was added.
+- The owner controls any later internal mirror push and consumer vendoring. This checkout adds no remote and touches no consumer repository. Preserve explicit limits supplied by consumers, including the volume cap; no default-limit change is part of this work.
 
 ## Proof
 
 `test/consumer.test.ts` creates a fresh external workspace-linked consumer. `test/consumer/surface.ts` imports only public entry points and pins 51 runtime occurrences plus six erased type imports. TypeScript checks the external consumer, then Node runs its representative pure/Effect operations. Neither stage contacts hosts or starts services.
 
-A second consumer runs against an isolated package snapshot with the `validateInstance` root export withdrawn. Both TypeScript and Node must fail specifically on that missing export. The test never edits the working tree.
+A second consumer runs against an isolated package snapshot with the `validateInstance` root export withdrawn. Both TypeScript and Node must fail specifically on that missing export. The test never edits the working tree. Additional package-name tests cover complete port maps, explicit adoption, raw command validation, missing bundles, provider propagation, and opt-in pre-stop behavior. Pure default unit snapshots remain identical to the root extraction commit. Extending the default helper changes its bundle bytes; pinned helper artifacts require consumer injection.
 
 Run consumer proof by hand with `ALCHEMY_TELEMETRY_DISABLED=1 pnpm exec vitest run --config vitest.config.ts test/consumer.test.ts`. Run the full manual checks with `pnpm check` and `pnpm test`. This repository has no hook or automatic gate.
+
+## Verified receipt
+
+- Manual `pnpm check` passed TypeScript and formatting across 123 files. Existing advisory suggestions are not errors.
+- Manual `pnpm test` passed 37 files and 91 tests. This includes the external consumer, withdrawal mutation, both pre-stop arms, complete port overrides, adoption, raw command validation, exact injected bundle bytes, missing/invalid bundles, required maintenance declarations, Python guard/exemption behavior, and fake-provider composition.
+- Manual `pnpm install --offline --frozen-lockfile --ignore-scripts` passed. Package configuration and lockfile remain unchanged.
+- Native Node resolved `alchemy-celld` to `src/index.ts` and imported the example stack/runtime without executing their actions.
+- The missing-export mutation requires both TypeScript and Node to reject `validateInstance`. The snapshot source is isolated; the checkout is not mutated.
+- Snapshot failure diffs were read before each deliberate update. The final `test/__snapshots__/instance.test.ts.snap` is byte-identical to extraction commit `5b6b349`.
+- `check-brain-svx.sh`, the pi-notes Brain check, and Git whitespace checks passed.
+- No consumer checkout, remote, publication, host service, or live unit was changed. Later vendoring, mirroring and live parity proof remain with the owner.

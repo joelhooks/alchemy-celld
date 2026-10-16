@@ -1,3 +1,5 @@
+import { refuse } from "./files.ts";
+import { uniformInstancePorts } from "./instance.ts";
 import type { InstanceLayout, InstanceProps } from "./instance.ts";
 import type { Node } from "./inventory-schema.ts";
 import { maintenanceArguments } from "./maintenance-targets.ts";
@@ -5,6 +7,27 @@ import type { UnitProps } from "./systemd.ts";
 
 const quote = (value: string): string =>
   `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("%", "%%").replaceAll("$", "$$")}"`;
+
+const restartContextArgument = (layout: InstanceLayout): string => {
+  const uniform: Readonly<Record<string, number>> = uniformInstancePorts(layout.portBase);
+  const ports = Object.entries(layout.ports).some(([name, port]) => port !== uniform[name])
+    ? layout.ports
+    : undefined;
+  if (ports === undefined && layout.adopt === undefined) return "";
+  return ` ${quote(
+    JSON.stringify({
+      ...(ports === undefined ? {} : { ports }),
+      ...(layout.adopt === undefined ? {} : { adopt: layout.adopt }),
+    }),
+  )}`;
+};
+
+const preStopArguments = (seconds: 0 | undefined): readonly string[] => {
+  if (seconds !== undefined && seconds !== 0) {
+    throw refuse("volumePreStopSeconds must be 0 when supplied.");
+  }
+  return seconds === 0 ? ["-volume.preStopSeconds=0"] : [];
+};
 
 export interface ServiceLimits {
   readonly cpuQuota?: string | undefined;
@@ -59,6 +82,7 @@ export const storeUnit = (
   input: ServiceLimits & {
     readonly layout: InstanceLayout;
     readonly volumeMax?: number | undefined;
+    readonly volumePreStopSeconds?: 0 | undefined;
     readonly home: string;
     readonly binary: string;
     readonly data: string;
@@ -110,7 +134,7 @@ export const storeUnit = (
             "-volume.pprof=false",
             "-master.volumeSizeLimitMB=64",
             `-volume.max=${input.volumeMax ?? 512}`,
-            "-volume.preStopSeconds=0",
+            ...preStopArguments(input.volumePreStopSeconds),
           ].join(" "),
         ],
         ...(input.restartGate === undefined
@@ -118,7 +142,8 @@ export const storeUnit = (
           : [
               [
                 "ExecStartPost",
-                `/usr/local/bin/node ${quote(input.restartGate.path)} ${quote(input.restartGate.address)} store ${quote(input.layout.instance)} ${input.layout.portBase} ${quote(input.layout.dataRoot)}`,
+                input.layout.restartGateCommands?.store ??
+                  `/usr/local/bin/node ${quote(input.restartGate.path)} ${quote(input.restartGate.address)} store ${quote(input.layout.instance)} ${input.layout.portBase} ${quote(input.layout.dataRoot)}${restartContextArgument(input.layout)}`,
               ] satisfies readonly [string, string],
             ]),
         ["WorkingDirectory", input.data.replaceAll("%", "%%")],
@@ -176,11 +201,13 @@ export const nodeUnit = (
           : [
               [
                 "ExecStartPre",
-                `/usr/local/bin/node ${quote(input.restartGate.path)} ${quote(input.restartGate.address)} before-node ${quote(input.layout.instance)} ${input.layout.portBase} ${quote(input.layout.dataRoot)}`,
+                input.layout.restartGateCommands?.beforeNode ??
+                  `/usr/local/bin/node ${quote(input.restartGate.path)} ${quote(input.restartGate.address)} before-node ${quote(input.layout.instance)} ${input.layout.portBase} ${quote(input.layout.dataRoot)}${restartContextArgument(input.layout)}`,
               ] satisfies readonly [string, string],
               [
                 "ExecStartPost",
-                `/usr/local/bin/node ${quote(input.restartGate.path)} ${quote(input.restartGate.address)} node ${quote(input.layout.instance)} ${input.layout.portBase} ${quote(input.layout.dataRoot)}`,
+                input.layout.restartGateCommands?.node ??
+                  `/usr/local/bin/node ${quote(input.restartGate.path)} ${quote(input.restartGate.address)} node ${quote(input.layout.instance)} ${input.layout.portBase} ${quote(input.layout.dataRoot)}${restartContextArgument(input.layout)}`,
               ] satisfies readonly [string, string],
             ]),
         ...(input.storageDiagnostic === undefined

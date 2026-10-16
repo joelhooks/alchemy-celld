@@ -20,6 +20,9 @@ import {
   hostLayer,
   HostShell,
   InstanceNameSchema,
+  InstancePortsSchema,
+  InstanceAdoptionSchema,
+  RestartGateCommandsSchema,
   listenerProbe,
   localExec,
   must,
@@ -36,6 +39,8 @@ import {
   removeStoreSockets,
   renderUnit,
   renderUnits,
+  renderMaintenanceScript,
+  MaintenanceGuardSchema,
   shellQuote,
   sourceLayer,
   Ssh,
@@ -61,6 +66,11 @@ import type {
   Declaration as DeclarationSchema,
   DeploymentProps,
   InstanceLayout,
+  InstancePorts,
+  InstanceAdoption,
+  RestartGateCommands,
+  MaintenanceGuard,
+  MaintenanceProps,
   Interface,
   Node,
   UnitProps,
@@ -70,7 +80,7 @@ import { offlineLayer } from "alchemy-celld/offline";
 import { Effect, Layer } from "effect";
 
 // Every runtime occurrence in the 30-module/57-symbol contract is pinned here.
-// The six erased type imports above are checked by pnpm typecheck.
+// The six original erased type imports and the additional opt-in seam types are checked by TypeScript.
 const surface = {
   adoption: [StateRecovery],
   "cache-io-script": [cacheIoScript],
@@ -122,13 +132,80 @@ const host: Node = {
   ssh: "example",
   tailnetIPv4: "203.0.113.10",
 };
-const props = { instance: "example", portBase: 33_000, restartGate: true };
+const props = {
+  instance: "example",
+  portBase: 33_000,
+  restartGate: true,
+  maintenanceGuard: { refuses: [] as const },
+};
 const layout: InstanceLayout = await Effect.runPromise(validateInstance(host, props));
 assert.equal(layout.nodeUnit, "example-celld.service");
 assert.equal(layout.ports.s3, 33_006);
 const store = renderUnits(host, props).find((unit) => unit.path.endsWith("-seaweedfs.service"));
 const storeExec = store?.text.split("\n").find((line) => line.startsWith("ExecStart="));
-assert.ok(storeExec?.endsWith(" -volume.max=512 -volume.preStopSeconds=0"));
+assert.ok(storeExec);
+assert.ok(storeExec.endsWith(" -volume.max=512"));
+assert.ok(!storeExec.includes("preStopSeconds"));
+const optedStore = renderUnits(host, props, { seaweed: { volumePreStopSeconds: 0 } }).find((unit) =>
+  unit.path.endsWith("-seaweedfs.service"),
+);
+assert.ok(optedStore?.text.includes(" -volume.max=512 -volume.preStopSeconds=0"));
+
+const explicitPorts: InstancePorts = {
+  public: 41_011,
+  internal: 42_022,
+  filer: 43_033,
+  filerGrpc: 44_044,
+  master: 45_055,
+  masterGrpc: 46_066,
+  s3: 47_077,
+  s3Grpc: 48_088,
+  volume: 49_099,
+  volumeGrpc: 50_110,
+};
+const adopted: InstanceAdoption = { name: "example-old", acceptsNestedSlice: true };
+const customCommands: RestartGateCommands = {
+  beforeNode: '/usr/local/bin/node "/srv/example/gate.mjs" before',
+  node: '/usr/local/bin/node "/srv/example/gate.mjs" node',
+  store: '/usr/local/bin/node "/srv/example/gate.mjs" store',
+};
+const migrated = await Effect.runPromise(
+  validateInstance(host, {
+    ...props,
+    instance: adopted.name,
+    adopt: adopted,
+    ports: explicitPorts,
+    restartGateCommands: customCommands,
+  }),
+);
+assert.deepEqual(migrated.ports, explicitPorts);
+assert.deepEqual(migrated.adopt, adopted);
+const protectedGuard: MaintenanceGuard = {
+  base: 41_000,
+  offsets: [11, 22, 33],
+  exemptInstance: "example-old",
+};
+const protectedProps: MaintenanceProps = { maintenanceGuard: protectedGuard };
+assert.ok(MaintenanceGuardSchema);
+assert.ok(
+  renderMaintenanceScript(host, { ...props, ...protectedProps }).text.includes(
+    "mailbox_ports = {41000 + offset for offset in (11, 22, 33)}",
+  ),
+);
+assert.ok(!renderMaintenanceScript(host, props).text.includes("mailbox_ports"));
+assert.ok(InstancePortsSchema.fields.public);
+assert.ok(InstanceAdoptionSchema.fields.acceptsNestedSlice);
+assert.ok(RestartGateCommandsSchema.fields.beforeNode);
+const customUnits = renderUnits(host, {
+  ...props,
+  instance: adopted.name,
+  adopt: adopted,
+  ports: explicitPorts,
+  restartGateCommands: customCommands,
+});
+assert.ok(
+  customUnits.some((unit) => unit.text.includes(`ExecStartPre=${customCommands.beforeNode}\n`)),
+);
 assert.equal(
   deploymentStageLayout(host.home, layout).directory,
   `${layout.configuration}/deployment`,

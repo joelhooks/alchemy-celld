@@ -5,7 +5,13 @@ import { Effect, Redacted, Schema } from "effect";
 import { Deployment, DeploymentProvider } from "./deployment.ts";
 import { textDigest, refuse } from "./files.ts";
 import { instanceNodeUnit } from "./instance-units.ts";
-import { InstanceNameSchema } from "./instance.ts";
+import {
+  InstancePortsSchema,
+  instancePortsError,
+  RestartGateCommandsSchema,
+  restartGateCommandsError,
+  validateInstanceName,
+} from "./instance.ts";
 import type { InstanceProps } from "./instance.ts";
 import type { Node as HostNode } from "./inventory-schema.ts";
 import { NodeProvider, NodeResource } from "./node-provider.ts";
@@ -31,9 +37,7 @@ export const Node = (id: string, props: CelldProps) =>
     const { host, bucket } = props;
     const { layout } = bucket;
 
-    yield* Schema.decodeEffect(InstanceNameSchema)(props.instance).pipe(
-      Effect.mapError(() => refuse("Invalid node instance.")),
-    );
+    yield* validateInstanceName(props.instance, props.adopt);
 
     if (layout.configuration !== `${host.home}/.config/${layout.instance}`) {
       return yield* refuse("Node host must match its bucket.");
@@ -45,6 +49,31 @@ export const Node = (id: string, props: CelldProps) =>
       props.restartGate !== layout.restartGate
     ) {
       return yield* refuse("Node instance must match its bucket.");
+    }
+
+    if (props.ports !== undefined) {
+      const ports = yield* Schema.decodeEffect(InstancePortsSchema, {
+        onExcessProperty: "error",
+      })(props.ports).pipe(Effect.mapError(() => refuse(instancePortsError)));
+      const bucketPorts: Readonly<Record<string, number>> = layout.ports;
+      if (Object.entries(ports).some(([name, port]) => port !== bucketPorts[name])) {
+        return yield* refuse("Node ports must match its bucket.");
+      }
+    }
+
+    if (props.restartGateCommands !== undefined) {
+      const commands = yield* Schema.decodeEffect(RestartGateCommandsSchema, {
+        onExcessProperty: "error",
+      })(props.restartGateCommands).pipe(Effect.mapError(() => refuse(restartGateCommandsError)));
+      if (
+        !props.restartGate ||
+        !layout.restartGateCommands ||
+        commands.beforeNode !== layout.restartGateCommands.beforeNode ||
+        commands.node !== layout.restartGateCommands.node ||
+        commands.store !== layout.restartGateCommands.store
+      ) {
+        return yield* refuse("Node restart-gate commands must match its bucket.");
+      }
     }
 
     const workerIPv4 = props.workerIPv4 ?? host.tailnetIPv4;
