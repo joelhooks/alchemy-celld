@@ -114,6 +114,11 @@ const validate = Effect.fn("Celld.Deployment.validate")(function* validate(props
       () =>
         new DeploymentError({
           reason: "Invalid generated deployment configuration",
+          field: "configuration",
+          expectedShape:
+            "JSON matching GeneratedConfiguration, including main=worker.mjs and no_bundle=true, without extra keys",
+          action:
+            "Regenerate the configuration with wranglerConfiguration before reconciling deployment.",
         }),
     ),
   );
@@ -122,13 +127,32 @@ const validate = Effect.fn("Celld.Deployment.validate")(function* validate(props
     props.versionPath ?? "/",
   ).pipe(
     Effect.mapError(
-      () => new DeploymentError({ reason: "Version path must be an origin-relative path." }),
+      () =>
+        new DeploymentError({
+          reason: "Version path must be an origin-relative path.",
+          field: "versionPath",
+          expectedShape:
+            "A single-leading-slash path without backslash, CR, LF, NUL, query or fragment",
+          action: "Set versionPath to the worker's origin-relative identity route, not a full URL.",
+        }),
     ),
   );
 
   if (props.secretNames !== undefined) {
     yield* Schema.decodeEffect(SecretNames)(props.secretNames).pipe(
-      Effect.mapError(() => new DeploymentError({ reason: "Invalid deployment secret names" })),
+      Effect.mapError(
+        () =>
+          new DeploymentError({
+            reason: "Invalid deployment secret names",
+            field: Array.isArray(props.secretNames)
+              ? `secretNames[${props.secretNames.findIndex((name) => typeof name !== "string" || !/^[A-Z][A-Z0-9_]*$/u.test(name))}]`
+              : "secretNames",
+            expectedShape:
+              "An array of strings matching ^[A-Z][A-Z0-9_]*$; offending value redacted",
+            action:
+              "Correct the identified entry's syntax; keep secret values in the private bindings file.",
+          }),
+      ),
     );
   }
 
@@ -141,7 +165,13 @@ const validate = Effect.fn("Celld.Deployment.validate")(function* validate(props
   }
 
   const internal = yield* Effect.try({
-    catch: () => new DeploymentError({ reason: "Invalid internal listener URL" }),
+    catch: () =>
+      new DeploymentError({
+        reason: "Invalid internal listener URL",
+        field: "internalUrl",
+        expectedShape: "A valid loopback HTTP operator URL with root pathname",
+        action: "Correct internalUrl in the private deployment declaration; do not log its value.",
+      }),
     try: () => new URL(props.internalUrl),
   });
 
@@ -152,6 +182,10 @@ const validate = Effect.fn("Celld.Deployment.validate")(function* validate(props
   ) {
     return yield* new DeploymentError({
       reason: "Reload must use the loopback operator listener",
+      field: "internalUrl",
+      expectedShape: "HTTP on 127.0.0.1 with pathname /",
+      action:
+        "Point internalUrl at the declared loopback operator listener, not the worker's public URL.",
     });
   }
 
@@ -174,6 +208,10 @@ export const deleteDeployment = Effect.fn("Celld.Deployment.delete")(function* r
   if (root === undefined) {
     return yield* new DeploymentError({
       reason: "Deployment delete escapes owned configuration",
+      field: "output.directory",
+      expectedShape: "A directory within the instance's inventory-derived configuration custody",
+      action:
+        "Restore the correct owned deployment directory in state; do not widen delete authority.",
     });
   }
 
@@ -199,6 +237,10 @@ export const DeploymentProvider = () =>
         if (response.status !== 200) {
           return yield* new DeploymentError({
             reason: "Version readback failed",
+            field: "versionPath",
+            expectedShape: "An HTTP 200 response from the worker identity route",
+            action:
+              "Check worker health and the configured identity route before retrying deployment.",
           });
         }
 
@@ -215,6 +257,14 @@ export const DeploymentProvider = () =>
         if (observed.version !== props.version || observed.commit !== props.commit) {
           return yield* new DeploymentError({
             reason: "Bundle identity does not match",
+            field: "bundleIdentity",
+            expectedShape:
+              "The declared version and commit; expected/actual fields contain SHA-256 digests, not raw values",
+            expected: { version: textDigest(props.version), commit: textDigest(props.commit) },
+            actual: { version: textDigest(observed.version), commit: textDigest(observed.commit) },
+            identityEncoding: "sha256",
+            action:
+              "Compare the differing identity fields locally and deploy the declared bundle before accepting readback.",
           });
         }
 
@@ -280,6 +330,10 @@ export const DeploymentProvider = () =>
               ? absent
               : yield* new DeploymentError({
                   reason: "Recorded deployment output requires previous props",
+                  field: "olds",
+                  expectedShape: "Previous DeploymentProps for recorded output",
+                  action:
+                    "Restore the matching previous props from provider state before reading this deployment.",
                 });
           }
 
@@ -293,6 +347,11 @@ export const DeploymentProvider = () =>
             if (output === undefined && (yield* shell.stat(olds.directory)) !== undefined) {
               return yield* new DeploymentError({
                 reason: "Only the exact declared deployment may be adopted",
+                field: "directory",
+                expectedShape:
+                  "Existing worker/configuration bytes and modes matching the declaration exactly",
+                action:
+                  "Compare the complete declared artifacts before adopting; do not claim a differing deployment.",
               });
             }
 
@@ -323,6 +382,10 @@ export const DeploymentProvider = () =>
           if (directory?.mode !== 0o700 || bundle?.mode !== 0o600 || config?.mode !== 0o600) {
             return yield* new DeploymentError({
               reason: "Deployment adoption requires private file modes",
+              field: "directory/worker.mjs/configuration modes",
+              expectedShape: "Directory mode 0700 and worker/configuration file modes 0600",
+              action:
+                "Correct permissions on the verified owned artifacts before explicit adoption.",
             });
           }
 
@@ -343,6 +406,11 @@ export const DeploymentProvider = () =>
           if (output === undefined && directory !== undefined && !(yield* installed(news))) {
             return yield* new DeploymentError({
               reason: "Existing deployment directory requires explicit adoption",
+              field: "directory",
+              expectedShape:
+                "An absent directory or an exactly matching explicitly adopted deployment",
+              action:
+                "Verify existing artifacts and use explicit adoption instead of overwriting an unrelated directory.",
             });
           }
 
@@ -351,6 +419,10 @@ export const DeploymentProvider = () =>
           } else if (directory.kind !== "directory" || directory.mode !== 0o700) {
             return yield* new DeploymentError({
               reason: "Deployment directory must have mode 700",
+              field: "directory",
+              expectedShape: "A regular directory with mode 0700",
+              action:
+                "Correct the type and mode of the owned deployment directory before reconciling.",
             });
           }
 
@@ -399,6 +471,10 @@ export const DeploymentProvider = () =>
                 if (!found) {
                   return yield* new DeploymentError({
                     reason: "Installed worker has no version identity",
+                    field: "versionPath response",
+                    expectedShape: "JSON containing string version and commit fields",
+                    action:
+                      "Expose the worker's declared identity on the configured route and retry readback.",
                   });
                 }
 

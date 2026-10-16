@@ -29,6 +29,10 @@ export const layer = Layer.effect(
       if (stat.type !== "File" || stat.mode % 0o1000 !== 0o600) {
         return yield* new InventoryError({
           reason: "Private inventory must be a regular file with mode 600.",
+          field: "FLEET_INVENTORY",
+          expectedShape: "A readable regular JSON file with mode 0600",
+          action:
+            "Correct the private inventory file type and mode without logging its path or contents.",
         });
       }
 
@@ -40,6 +44,11 @@ export const layer = Layer.effect(
         () =>
           new InventoryError({
             reason: "Private inventory is unreadable or malformed; values redacted.",
+            field: "FLEET_INVENTORY",
+            expectedShape:
+              "A mode-0600 regular JSON file matching Instance, with nonempty domains/hosts/ips/secretNames/sites and valid optional nodes",
+            action:
+              "Check file permissions and private inventory schema locally; do not log inventory values.",
           }),
       ),
     );
@@ -51,6 +60,9 @@ export const layer = Layer.effect(
         if (node === undefined) {
           return yield* new InventoryError({
             reason: "Requested node is absent from private inventory.",
+            field: "nodes[alias]",
+            expectedShape: "An existing node entry for the requested alias; alias value redacted",
+            action: "Select an existing inventory alias or add its complete private node entry.",
           });
         }
 

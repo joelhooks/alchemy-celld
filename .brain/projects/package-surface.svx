@@ -12,10 +12,10 @@ The supported consumer contract is the explicit root API in `src/index.ts`. The 
 - Export host inventory's `layer` as `hostLayer` and SSH's `layer` as `sshLayer`.
 - Export canonical instance `startupLayer` unchanged. Export the startup-contract shim as `startupContractLayer`. The consumer proof pins both names and their shared implementation.
 - Keep `Declaration` as a schema export. Existing erased type imports use `typeof Declaration.Type`.
-- Keep Claude-specific runtime files permanently outside this package. Rat-king owns that surface and its later import migration. Billing is outside this work.
+- Keep Claude-specific runtime files permanently outside this package. The consumer owns that surface and its later import migration. Billing is outside this work.
 - Use package self-reference in examples. Do not bypass exports with relative source imports or TypeScript path aliases.
 - Preserve the TypeScript-source distribution. Native Node consumer proof uses workspace links. An installed tarball requires a TypeScript-capable bundler or loader, not Node's built-in stripping under `node_modules`.
-- Keep this repository local: no remote, no push, no publication.
+- Worker boundary: add no remote, push nothing and publish nothing. The owner controls mirrors, tags and publication.
 - Weed pre-stop behavior is opt-in: `volumePreStopSeconds: 0` appends the flag after `volume.max`; omission renders no pre-stop flag. This supersedes the owner's earlier unconditional-flag instruction. `renderUnits` was already public. Its generated-input property now pins both arms. The default instance snapshots are byte-identical to the extraction baseline; no compatibility snapshot exists here.
 - Optional `ports` is a complete ten-field, integer port map. Reject partial, malformed and extra-key maps. Keep the uniform block when absent. No deployment-specific map belongs in this package.
 - Existing names use explicit `adopt: { name, acceptsNestedSlice: true }`, validated separately and matched to `instance`. Its 16-character bound preserves the existing owner-unit and credential-rotation schemas. New-instance schema remains strict. Propagate adoption through Slice, Bucket, Node, and the default helper.
@@ -32,7 +32,28 @@ A second consumer runs against an isolated package snapshot with the `validateIn
 
 Run consumer proof by hand with `ALCHEMY_TELEMETRY_DISABLED=1 pnpm exec vitest run --config vitest.config.ts test/consumer.test.ts`. Run the full manual checks with `pnpm check` and `pnpm test`. This repository has no hook or automatic gate.
 
-## Verified receipt
+## 0.1.2 peer and error contract
+
+- Effect and Alchemy are required host peers, not hard dependencies. Latest owner ranges: `effect: ^4.0.0` and `alchemy: >=2.0.0-beta.81 <2.0.0-beta.84`. Development pins remain exactly Effect 4.0.1 and Alchemy beta.81. This supersedes the initial narrower peer proposal; no RC compatibility is claimed.
+- Published upstream platform-node/vitest manifests use caret Effect peers. Platform-node stays internal: the standalone gate/probe NodeServices layer provides Effect-owned tags and no platform-specific tag escapes the public boundary. Esbuild stays a runtime dependency because exported build functions invoke it during operator execution.
+- Peer warnings depend on consumer policy. The offline bare tarball fixture disables auto-install, requires `pnpm peers check` to name the missing Effect/Alchemy peers, and verifies neither resolves from host or provider. Only internal transitive versions are pinned for its cache. The supplied-peer fixture reuses the pinned graph and requires both module resolutions to share their real paths. `CELLD_PEER_RECEIPT` optionally saves the concrete private paths and packed digest outside tracked source.
+- Preserve all seven error tags, existing raise conditions, and open reason strings. Add operation/field/accepted-shape/action context. Keep public reason-only constructor use working through metadata defaults. Do not normalize casing/punctuation globally.
+- Worker/operator/deployment build failures retain safe diagnostic categories, severities and line/column data. The entrypoint descriptor is explicitly redacted and retains only a known source extension. Raw snippets, filenames, plugin detail and causes are never attached; direct esbuild logging is silent so it cannot bypass redaction. Missing-output errors retain sanitized warnings too.
+- Deployment bindings and empty identity failures are distinct. Identity mismatches expose expected/actual version and commit digests, explicitly marked SHA-256. Invalid secret names identify the list index and accepted identifier syntax without echoing the entry.
+- Keep inventory and host-fact redaction. Fake-shell errors report safe known command tokens but never arguments or unknown command values; directory errors identify parent/collision state, not paths. Archive input names/header values are redacted in error wording. Delete-custody invariant wording remains precise.
+- Generated Python strings, maintenance script body and unit templates are unchanged. Existing listener receipts remain unchanged; new listener prose does not copy their values. Successful operations, retry/control flow and ownership rules are not altered by the payload changes.
+
+## 0.1.2 verification
+
+- Manual `pnpm check` passed TypeScript and formatting across 128 files, with advisory suggestions only.
+- Manual full `pnpm test` passed 40 files and 102 tests in 7.68 seconds. This includes the real tarball bare/supplied peer fixtures, actual esbuild failure, all three missing-output plants, redaction, and provider identity/secret-name errors.
+- Manual frozen offline installation with ignored scripts passed on pnpm 11.28.2. Only the root importer classification changes in the lockfile; no transitive resolution changes.
+- The external install fixture used available pnpm 11.10.0, within package engines. Its concrete host/provider resolutions and packed digest are saved privately in `.git/peer-resolution-0.1.2.json`. Both roles resolved the identical real Effect file and identical real Alchemy file on the 4.0.1/beta.81 baseline. Temporary install trees are removed after the proof; the receipt remains.
+- A separate attempted 11.28.2 fresh offline fixture encountered that version's registry-metadata cache-layout migration. No online hydration or global-cache edits were used to hide it. This is not an all-installer or all-admitted-version runtime claim; the owner still owns real consumer-graph verification.
+- No snapshots changed. All snapshots remain identical to extraction commit `5b6b349`. Generated Python, maintenance rendering and unit templates are unchanged from `c02b5c1`.
+- No service, consumer checkout, remote configuration, push or tag was changed by this packet. Existing owner-configured remotes and untracked harness files are preserved.
+
+## Prior surface receipt (before 0.1.2)
 
 - Manual `pnpm check` passed TypeScript and formatting across 123 files. Existing advisory suggestions are not errors.
 - Manual `pnpm test` passed 37 files and 91 tests. This includes the external consumer, withdrawal mutation, both pre-stop arms, complete port overrides, adoption, raw command validation, exact injected bundle bytes, missing/invalid bundles, required maintenance declarations, Python guard/exemption behavior, and fake-provider composition.

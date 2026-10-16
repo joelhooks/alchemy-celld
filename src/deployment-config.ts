@@ -1,5 +1,8 @@
 import { Effect, Schema } from "effect";
 
+import { BuildDiagnostic, RedactedEntrypoint } from "./build-diagnostics.ts";
+import { ErrorDetails, errorMessage } from "./error-details.ts";
+
 const bindingNamePattern = /^[A-Za-z_][A-Za-z0-9_]*$/u;
 
 export const BindingName = Schema.String.check(Schema.isPattern(bindingNamePattern));
@@ -33,9 +36,22 @@ export interface DeploymentBuild {
   readonly vars: Readonly<Record<string, string>>;
 }
 
+const IdentityDigest = Schema.Struct({ version: Schema.String, commit: Schema.String });
+
 export class DeploymentError extends Schema.TaggedError<DeploymentError>()("DeploymentError", {
+  operation: Schema.tag("deployment"),
   reason: Schema.String,
-}) {}
+  ...ErrorDetails,
+  expected: Schema.optionalKey(IdentityDigest),
+  actual: Schema.optionalKey(IdentityDigest),
+  identityEncoding: Schema.optionalKey(Schema.Literal("sha256")),
+  entrypoint: Schema.optionalKey(RedactedEntrypoint),
+  diagnostics: Schema.optionalKey(Schema.Array(BuildDiagnostic)),
+}) {
+  override get message(): string {
+    return errorMessage(this);
+  }
+}
 
 export const wranglerConfiguration = Effect.fn("Celld.Deployment.configuration")(
   function* wranglerConfiguration(
@@ -46,7 +62,17 @@ export const wranglerConfiguration = Effect.fn("Celld.Deployment.configuration")
     const bindings = yield* Schema.decodeUnknownEffect(Declaration, {
       onExcessProperty: "error",
     })(declaration).pipe(
-      Effect.mapError(() => new DeploymentError({ reason: "Unsupported deployment declaration" })),
+      Effect.mapError(
+        () =>
+          new DeploymentError({
+            reason: "Unsupported deployment declaration",
+            field: "declaration",
+            expectedShape:
+              "Declaration schema with compatibility_date, compatibility_flags, durable_objects, migrations and name; no extra keys",
+            action:
+              "Correct the declaration's fields and binding-name syntax before generating configuration.",
+          }),
+      ),
     );
 
     const names = bindings.durable_objects.bindings.map((binding) => binding.name);
@@ -60,13 +86,38 @@ export const wranglerConfiguration = Effect.fn("Celld.Deployment.configuration")
       names.some((name) => Object.hasOwn(build.vars, name)) ||
       Object.keys(build.vars).some((name) => !bindingNamePattern.test(name)) ||
       classes.some((name) => !migrated.includes(name)) ||
-      migrated.some((name) => !classes.includes(name)) ||
-      build.version.length === 0 ||
-      build.commit.length === 0 ||
-      build.main.length === 0
+      migrated.some((name) => !classes.includes(name))
     ) {
       return yield* new DeploymentError({
-        reason: "Invalid deployment bindings or bundle identity",
+        reason: "Invalid deployment bindings",
+        field:
+          new Set(names).size !== names.length
+            ? "durable_objects.bindings.name"
+            : names.some((name) => Object.hasOwn(build.vars, name)) ||
+                Object.keys(build.vars).some((name) => !bindingNamePattern.test(name))
+              ? "build.vars"
+              : classes.some((name) => !migrated.includes(name))
+                ? "durable_objects.bindings.class_name"
+                : "migrations.new_sqlite_classes",
+        expectedShape:
+          "Unique binding identifiers, no variable collisions, and exactly the declared classes in migrations",
+        action:
+          "Remove duplicate/colliding names and make binding classes and migration classes agree.",
+      });
+    }
+
+    if (build.version.length === 0 || build.commit.length === 0 || build.main.length === 0) {
+      return yield* new DeploymentError({
+        reason: "Invalid bundle identity",
+        field:
+          build.version.length === 0
+            ? "build.version"
+            : build.commit.length === 0
+              ? "build.commit"
+              : "build.main",
+        expectedShape: "A nonempty string",
+        action:
+          "Supply the missing bundle identity field before generating deployment configuration.",
       });
     }
 

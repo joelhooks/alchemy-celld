@@ -1,5 +1,5 @@
 import * as Test from "alchemy/Test/Vitest";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Result, Schema } from "effect";
 import { HttpClient, HttpClientResponse } from "effect/http";
 import { expect } from "vitest";
 
@@ -8,7 +8,9 @@ import {
   DeploymentProvider,
   bindingConfigurationScriptFor,
 } from "../src/deployment.ts";
+import { DeploymentError } from "../src/deployment-config.ts";
 import { makeFakeShell } from "../src/fake-shell.ts";
+import { textDigest } from "../src/files.ts";
 import { HostShell } from "../src/host-shell.ts";
 import { checkedStack } from "./checked-stack.ts";
 
@@ -88,6 +90,61 @@ test.provider(
       expect(commands.find((argv) => argv[0] === "python3")?.[2]).toBe(
         bindingConfigurationScriptFor(secretNames),
       );
+    }),
+);
+
+test.provider(
+  "structured deployment failures identify a secret entry and hash expected/actual bundle identities",
+  (scratch) =>
+    Effect.gen(function* structuredFailures() {
+      const output = yield* checkedStack(scratch).deploy(Deployment("worker", props));
+      const provider = yield* Deployment.Provider;
+      if (provider.read === undefined) return yield* Effect.die("Missing deployment read port");
+      const privateValue = "EXAMPLE_PRIVATE_VALUE_DO_NOT_LOG";
+      for (const selected of [
+        { ...props, secretNames: ["VALID_NAME", `invalid-${privateValue}`] },
+        { ...props, version: `different-${privateValue}` },
+      ]) {
+        const attempt: Effect.Effect<unknown, DeploymentError> = provider
+          .read({
+            fqn: "worker",
+            id: "worker",
+            instanceId: "00000000-0000-4000-8000-000000000001",
+            olds: selected,
+            output,
+          })
+          .pipe(
+            Effect.catch((error: unknown) =>
+              Schema.is(DeploymentError)(error)
+                ? Effect.fail(error)
+                : Effect.die("Unexpected deployment error type"),
+            ),
+          );
+        const result = yield* attempt.pipe(Effect.result);
+        expect(Result.isFailure(result)).toBe(true);
+        if (Result.isFailure(result)) {
+          expect(Schema.is(DeploymentError)(result.failure)).toBe(true);
+          if (Schema.is(DeploymentError)(result.failure)) {
+            expect(JSON.stringify(result.failure)).not.toContain(privateValue);
+            if ("secretNames" in selected) {
+              expect(result.failure.reason).toBe("Invalid deployment secret names");
+              expect(result.failure.field).toBe("secretNames[1]");
+              expect(result.failure.expectedShape).toContain("^[A-Z][A-Z0-9_]*$");
+            } else {
+              expect(result.failure.reason).toBe("Bundle identity does not match");
+              expect(result.failure.identityEncoding).toBe("sha256");
+              expect(result.failure.expected).toEqual({
+                version: textDigest(selected.version),
+                commit: textDigest(selected.commit),
+              });
+              expect(result.failure.actual).toEqual({
+                version: textDigest(identity.version),
+                commit: textDigest(identity.commit),
+              });
+            }
+          }
+        }
+      }
     }),
 );
 

@@ -283,9 +283,34 @@ export const makeFakeShell = Effect.fn("HostShell.fake")((custody?: Custody) =>
         }
 
         if (program !== "systemctl" || scope !== "--user") {
+          const received = [
+            "systemctl",
+            "chmod",
+            "python3",
+            "echo",
+            "curl",
+            "node",
+            "sh",
+            "bash",
+            "ls",
+            "cat",
+            "whoami",
+            "mkdir",
+            "rm",
+            "true",
+            "false",
+          ].includes(program ?? "")
+            ? program
+            : "<redacted command>";
           return yield* new HostError({
             operation: "exec",
-            reason: "Fake refuses unknown command.",
+            reason: `Fake refuses unknown command. Received program: ${received}; arguments redacted.`,
+            field: "argv",
+            actual: `${received}; arguments redacted`,
+            expectedShape:
+              "chmod; systemctl --user; python3 with a recognised cleanup or purge script",
+            action:
+              "Use an accepted fake command or explicitly add support to the test transport; do not send arbitrary shell text.",
           });
         }
 
@@ -302,6 +327,17 @@ export const makeFakeShell = Effect.fn("HostShell.fake")((custody?: Custody) =>
           return yield* new HostError({
             operation: "mkdir",
             reason: "Invalid directory creation.",
+            field: !directories.has(path.slice(0, path.lastIndexOf("/"))) ? "path.parent" : "path",
+            actual: !directories.has(path.slice(0, path.lastIndexOf("/")))
+              ? "absent parent"
+              : files.has(path)
+                ? "existing file"
+                : "existing directory",
+            expectedShape:
+              "An absent child directory with an existing parent directory; path value redacted",
+            action: !directories.has(path.slice(0, path.lastIndexOf("/")))
+              ? "Create the parent directory first, then retry the declared child."
+              : "Use an unused directory path or explicitly reconcile/adopt the existing owned directory.",
           });
         }
 
@@ -335,6 +371,9 @@ export const makeFakeShell = Effect.fn("HostShell.fake")((custody?: Custody) =>
           return yield* new HostError({
             operation: "rmdir",
             reason: "Directory is not empty.",
+            field: "path.children",
+            expectedShape: "An empty owned directory",
+            action: "Remove only declared owned children before removing their parent directory.",
           });
         }
 
@@ -363,6 +402,9 @@ export const makeFakeShell = Effect.fn("HostShell.fake")((custody?: Custody) =>
           return yield* new HostError({
             operation: "write",
             reason: "Missing parent.",
+            field: "path.parent",
+            expectedShape: "An existing parent directory",
+            action: "Declare or reconcile the parent directory before writing the file.",
           });
         }
 
@@ -388,6 +430,11 @@ export const makeFakeShell = Effect.fn("HostShell.fake")((custody?: Custody) =>
           return yield* new HostError({
             operation: "archive",
             reason: "Invalid external archive move.",
+            field: file === undefined ? "source" : "destination",
+            expectedShape:
+              "An existing source file and an unused destination path; values redacted",
+            action:
+              "Supply an existing source and choose a destination without a file, directory or symlink collision.",
           });
         }
 

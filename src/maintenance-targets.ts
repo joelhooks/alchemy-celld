@@ -1,12 +1,17 @@
 import { Schema } from "effect";
 
+import { ErrorDetails, errorMessage } from "./error-details.ts";
 import type { InstanceLayout } from "./instance.ts";
 import { maintenanceGuardBlocks, maintenanceGuardError } from "./maintenance-guard.ts";
 
 export class MaintenanceRenderError extends Schema.TaggedError<MaintenanceRenderError>()(
   "MaintenanceRenderError",
-  { reason: Schema.String },
-) {}
+  { operation: Schema.tag("render-maintenance"), reason: Schema.String, ...ErrorDetails },
+) {
+  override get message(): string {
+    return errorMessage(this);
+  }
+}
 
 const quote = (value: string): string =>
   `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("%", "%%").replaceAll("$", "$$")}"`;
@@ -18,7 +23,13 @@ export const assertMaintenanceIsolation = (
 ): void => {
   if (kind === "script") {
     if (layout.maintenanceGuard === undefined) {
-      throw new MaintenanceRenderError({ reason: maintenanceGuardError });
+      throw new MaintenanceRenderError({
+        reason: maintenanceGuardError,
+        field: "maintenanceGuard",
+        expectedShape: "{ base, offsets, exemptInstance } or { refuses: [] }",
+        action:
+          "Declare protected ports or explicitly refuse nothing before rendering maintenance.",
+      });
     }
     const guard = maintenanceGuardBlocks(layout.maintenanceGuard);
     if (
@@ -27,6 +38,10 @@ export const assertMaintenanceIsolation = (
     ) {
       throw new MaintenanceRenderError({
         reason: "Requested maintenanceGuard is missing from the rendered script.",
+        field: "renderedScript",
+        expectedShape: "Both canonical guard declaration and exemption condition",
+        action:
+          "Regenerate the complete script with renderMaintenanceScript; retain the requested guard.",
       });
     }
   }
@@ -34,7 +49,13 @@ export const assertMaintenanceIsolation = (
     const port = match.groups?.role === "master" ? layout.ports.master : layout.ports.filer;
 
     if (match.groups?.target !== `http://127.0.0.1:${port}`) {
-      throw new MaintenanceRenderError({ reason: "Maintenance target escapes its instance." });
+      throw new MaintenanceRenderError({
+        reason: "Maintenance target escapes its instance.",
+        field: match.groups?.role === "master" ? "--master" : "--filer",
+        expectedShape: "An explicit loopback HTTP endpoint using this instance's declared port",
+        action:
+          "Render maintenance arguments from the same instance layout; do not substitute peer endpoints.",
+      });
     }
   }
 };

@@ -71,6 +71,11 @@ export const assertDeletePath = (shell: Interface, path: string, kind: "director
         new HostError({
           operation: "provider",
           reason: "Delete path escapes its instance custody.",
+          field: kind === "files" ? "file.path" : "directory.path",
+          expectedShape:
+            "An explicitly declared owned path or a permitted bootstrap artifact; value redacted",
+          action:
+            "Select the declared instance-owned path; never widen custody to make deletion pass.",
         }),
       );
 };
@@ -91,6 +96,11 @@ export const assertDeleteUnit = (
         new HostError({
           operation: "provider",
           reason: "Delete unit escapes its instance custody.",
+          field: "unit.home/name/path",
+          expectedShape:
+            "The exact declared instance user unit and its owned fragment path; values redacted",
+          action:
+            "Correct the unit declaration to match instance custody; do not claim or delete a foreign unit.",
         }),
       );
 };

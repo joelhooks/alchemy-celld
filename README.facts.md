@@ -1,9 +1,10 @@
 - Package name: `alchemy-celld`.
-- Package version: `0.1.0`.
+- Package version: `0.1.2`.
 - License: MIT; `LICENSE` and `LICENSE-homeflare-kit` contain the notices.
 - The Linux and release providers in `src/` adapt `taslabs-net/homeflare-kit` at `cf20298`; its MIT notice is retained in `LICENSE-homeflare-kit`.
-- Runtime dependencies: `@effect/platform-node@4.0.0`, `alchemy@2.0.0-beta.81`, `effect@4.0.1`, `esbuild@0.28.2`.
-- Development dependencies: `@effect/tsgo@0.45.0`, `@effect/vitest@4.0.1`, `@types/node@24.13.6`, `oxfmt@0.68.0`, `typescript@7.0.2`, `vitest@5.0.1`.
+- Internal runtime dependencies: `@effect/platform-node@4.0.0`, `esbuild@0.28.2`.
+- Required host peer dependencies: `alchemy@>=2.0.0-beta.81 <2.0.0-beta.84`, `effect@^4.0.0`.
+- Development dependencies: `@effect/tsgo@0.45.0`, `@effect/vitest@4.0.1`, `@types/node@24.13.6`, `alchemy@2.0.0-beta.81`, `effect@4.0.1`, `oxfmt@0.68.0`, `typescript@7.0.2`, `vitest@5.0.1`.
 - Node.js requirement: `>=24.18.0`; package manager: `pnpm@11.28.2`.
 - Target platform: Linux x86_64. The celld asset is `celld-x86_64-unknown-linux-gnu.gz`.
 - celld pin: `v0.6.1`; compressed SHA-256: `79a8253cff5d4e8a4a9f7a2611e393390f7fe9025f00e88467875b007c44866b`; extracted SHA-256: `810b2a0b70e3420daee80f1d5378de5ba28651f0371ec7aa70b6c5de77e70d9e`.
@@ -27,6 +28,16 @@
 The root keeps the existing exports and adds the consumer surface below. Explicit exports avoid exposing every helper in `src/` as supported API. `probeUnitLimits` is available without exporting the probe stack's fixed instance name, port base, or program. The low-level file, systemd, and cleanup operations remain Effect programs; callers still supply the shell and custody required by their signatures.
 
 The two `layer` exports have distinct root names: `hostLayer` comes from `host.ts`, and `sshLayer` comes from `ssh.ts`. Callers can retain their local names with `import { hostLayer as layer } from "alchemy-celld"`. `startupLayer` comes from the canonical instance contract. `startupContractLayer` comes through the startup-contract shim. Both startup names refer to the same implementation, and the consumer proof pins both. `HostInventory.layer` and `Ssh.layer` remain available too.
+
+### Shared runtime contract
+
+Effect and Alchemy are required peers because the provider exchanges Effect services and Alchemy resources/outputs with its host application. Their exact development pins keep this repository's own checks reproducible; they are not private runtime dependencies installed for the provider.
+
+Upstream `@effect/platform-node@4.0.0` declares an Effect peer of `^4.0.0`, and `@effect/vitest@4.0.1` declares `^4.0.1`: compatible ranges are the published Effect ecosystem convention. This package declares `^4.0.0`, admitting compatible stable Effect 4 releases including 4.0.0, but excluding Effect 5 and prereleases such as 4.0.0-rc.110. Its Alchemy range is deliberately bounded to `>=2.0.0-beta.81 <2.0.0-beta.84`: beta.81 through beta.83 are admitted, while beta.80, beta.84, and 2.0.0 final are excluded. The local development and test baseline remains exactly Effect 4.0.1 and Alchemy beta.81; the peer ranges are not a claim that every admitted version has been exercised by this suite.
+
+`@effect/platform-node` remains an internal dependency. It provides Node implementations inside the standalone gate/probe programs, not a platform-specific tag exchanged with the host. Its `NodeServices.layer` supplies tags owned by Effect, including `FileSystem` and `Path`. Esbuild remains an internal runtime dependency: `prepareDeployment`, `workerBundle`, and `operatorBundle` call its `build` function when the operator runs them, not only while publishing this package.
+
+Peer diagnostics depend on installer policy. With pnpm peer auto-install disabled, a bare consumer gets missing-peer warnings for Effect and Alchemy; strict peer checking can turn those warnings into installation errors. Pnpm's default `autoInstallPeers: true` instead installs missing peers automatically. Declaring peers does not override that consumer-side policy or itself guarantee one physical module instance. `test/package-peers.test.ts` packs the real package, verifies missing-peer diagnostics without auto-install, and checks that a consumer supplying the supported versions resolves the same Effect and Alchemy paths as the provider.
 
 ### Consumer contract: 30 modules, 57 symbol occurrences
 
@@ -81,6 +92,16 @@ The root additionally exports `InstancePortsSchema`, `InstanceAdoptionSchema`, `
 The default gate command stays topology-explicit: address, action, instance, port base, and data root. A non-uniform port map or adoption acknowledgement adds one systemd-quoted JSON context argument with `ports` and/or `adopt`. The shipped helper validates that context and reconstructs the same layout before running commands. An omitted context keeps the existing uniform command bytes. Custom commands bypass this generated ABI and use the consumer's supplied bundle instead. Extending the shipped helper changes that helper's bundle bytes; consumers preserving a pinned helper artifact must inject it explicitly.
 
 `test/maintenance-guard.test.ts` pins omission failure versus explicit-empty success, canonical protected-guard bytes, block-withdrawal detection, invalid/incomplete declarations, and actual Python rejection/exemption before any network access. The maintenance isolation assertion verifies the requested script blocks as well as explicit endpoint isolation. `test/instance-ports.test.ts` checks complete overrides, every missing port key, invalid values, default-byte preservation, rendered listeners and gate context. `test/instance-adoption.test.ts` checks the strict/adopted name paths, command-injection rejection, missing bundles, and provider propagation through fake providers. All new fixtures use invented names, addresses, ports and paths. No tests contact hosts or start services.
+
+### Error payloads and redaction
+
+Tagged error identities and raise conditions are retained. Errors expose an `operation`, an invariant `reason`, and field/accepted-shape/action context. Existing open reason strings remain open; there is no global casing or punctuation rewrite. `HostError` keeps its existing constructor usable, with optional additional context. Public maintenance-error constructors also retain reason-only construction through context defaults.
+
+`WorkerBundleFailure` includes a redacted `entrypoint` descriptor (field, redaction marker, source extension) and structured `diagnostics`: category, severity, field, safe text, and line/column when available. Deployment and operator build errors use the same diagnostic projection. Raw source paths, source lines, arbitrary quoted values, plugin detail and raw causes are not retained. Esbuild's direct diagnostic logging is disabled so those raw values do not bypass the redacted payload. Missing-output failures identify the expected output and preserve sanitized build warnings.
+
+Deployment bindings and empty bundle identity have separate reasons. Identity mismatches carry `expected` and `actual` version/commit SHA-256 digests with `identityEncoding: "sha256"`, not raw identity values. Invalid secret names identify the offending `secretNames[index]` and the accepted `^[A-Z][A-Z0-9_]*$` shape without echoing that entry. Fake-shell failures name safe known command tokens while redacting arguments or unknown command values; directory failures identify the field and collision/parent state without revealing paths. Inventory/host validation retains its existing redaction, naming the field and accepted shape rather than embedding raw schema issues.
+
+Existing security invariants, including `Delete path escapes its instance custody` and `named maintenance refuses mailbox ports`, are preserved. Generated Python parser strings and the maintenance script body are unchanged. Existing listener receipts are retained; the new listener error message adds invariant/action context rather than copying receipt values into prose. Error-context and missing-output tests cover the payloads and redaction; default render snapshots remain separate byte-preservation evidence.
 
 ### Consumer proof and runtime scope
 

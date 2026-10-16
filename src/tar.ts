@@ -16,7 +16,15 @@ const KINDS = new Map<string, string>([
   ["x", "a PAX extended header"],
 ]);
 
-const refuse = (message: string): ArchiveRefused => new ArchiveRefused({ message });
+const refuse = (reason: string): ArchiveRefused =>
+  new ArchiveRefused({
+    reason,
+    field: "archive",
+    expectedShape:
+      "A complete checked ustar/GNU archive of unique regular files under the declared root",
+    action:
+      "Supply a verified archive with safe relative member names; do not bypass archive custody checks.",
+  });
 
 const strict = new TextDecoder("utf-8", { fatal: true, ignoreBOM: false });
 
@@ -50,7 +58,7 @@ const octal = (block: Uint8Array, start: number, length: number, what: string): 
     .replace(/^ +/u, "");
 
   if (!/^[0-7]+$/u.test(digits)) {
-    throw refuse(`${what} is not octal: ${JSON.stringify(digits)}`);
+    throw refuse(`${what} is not octal; value redacted`);
   }
 
   return Number.parseInt(digits, 8);
@@ -199,7 +207,7 @@ export const tarReader = (wanted: ReadonlySet<string>, root?: string) => {
     const problem = nameProblem(rawName);
 
     if (problem !== undefined) {
-      throw refuse(`entry ${JSON.stringify(rawName)} ${problem}`);
+      throw refuse(`entry name ${problem}; value redacted`);
     }
 
     if (acceptRoot(rawName)) {
@@ -211,16 +219,16 @@ export const tarReader = (wanted: ReadonlySet<string>, root?: string) => {
 
     if (type !== "0" && type !== "\0") {
       const kind = KINDS.get(type) ?? `of unknown type ${JSON.stringify(type)}`;
-      throw refuse(`entry "${rawName}" is ${kind}; only regular files are accepted`);
+      throw refuse(`entry is ${kind}; only regular files are accepted; name redacted`);
     }
 
     if (seen.has(name)) {
-      throw refuse(`entry "${rawName}" appears twice`);
+      throw refuse("entry appears twice; name redacted");
     }
 
     seen.add(name);
     names.push(name);
-    remaining = octal(header, 124, 12, `entry "${rawName}"'s size`);
+    remaining = octal(header, 124, 12, "entry size");
     padding = (BLOCK - (remaining % BLOCK)) % BLOCK;
     parts = wanted.has(name) ? [] : undefined;
     phase = "data";
@@ -280,7 +288,7 @@ export const tarReader = (wanted: ReadonlySet<string>, root?: string) => {
     }
 
     if (rootPrefix !== undefined && !rootSeen) {
-      throw refuse(`the declared root "${rootPrefix}" never appears in the archive`);
+      throw refuse("the declared root never appears in the archive; value redacted");
     }
 
     return { members, names };

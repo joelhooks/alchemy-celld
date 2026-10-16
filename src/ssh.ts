@@ -32,6 +32,11 @@ export const layer = (
             new HostError({
               operation: "connect",
               reason: "Invalid host facts; values redacted.",
+              field: "node",
+              expectedShape:
+                "Normalized absolute home/dataRoot paths, a safe nonempty SSH target, and a literal IPv4 address",
+              action:
+                "Correct the private node inventory fields locally; do not log their values or attach raw schema issues.",
             }),
         ),
       );

@@ -1,5 +1,6 @@
 import { Data, Effect } from "effect";
 
+import { errorMessage } from "./error-details.ts";
 import { must } from "./host-shell.ts";
 import type { Interface } from "./host-shell.ts";
 import { declaredListeners } from "./instance-listener-contract.ts";
@@ -15,7 +16,18 @@ const Assessment = Data.taggedEnum<ListenerAssessment>();
 
 export class ListenerExposure extends Data.TaggedError("ListenerExposure")<{
   readonly receipt: string;
-}> {}
+}> {
+  readonly operation = "validate-listeners";
+  readonly reason = "Startup listener contract violated";
+  readonly field = "listeners";
+  readonly expectedShape =
+    "Exactly the declared unit-owned listeners, without duplicates or extra exposure";
+  readonly action =
+    "Inspect the existing listener receipt and correct ownership or bindings before restarting units.";
+  override get message(): string {
+    return errorMessage(this);
+  }
+}
 
 const listenerKey = ({
   unit,
