@@ -110,6 +110,7 @@ export const storeUnit = (
             "-volume.pprof=false",
             "-master.volumeSizeLimitMB=64",
             `-volume.max=${input.volumeMax ?? 512}`,
+            "-volume.preStopSeconds=0",
           ].join(" "),
         ],
         ...(input.restartGate === undefined

@@ -1,0 +1,27 @@
+---
+title: Celld Package Surface
+---
+
+# Celld package surface
+
+The supported consumer contract is the explicit root API in `src/index.ts`. The full 30-module, 57-symbol occurrence list lives in `README.facts.md` beside the package entry-point and runtime-scope documentation.
+
+## Decisions
+
+- Keep the existing root API and the `HostInventory` and `offline` subpaths. Do not add wildcard source exports.
+- Export host inventory's `layer` as `hostLayer` and SSH's `layer` as `sshLayer`.
+- Export canonical instance `startupLayer` unchanged. Export the startup-contract shim as `startupContractLayer`. The consumer proof pins both names and their shared implementation.
+- Keep `Declaration` as a schema export. Existing erased type imports use `typeof Declaration.Type`.
+- Keep Claude-specific runtime files permanently outside this package. Rat-king owns that surface and its later import migration. Billing is outside this work.
+- Use package self-reference in examples. Do not bypass exports with relative source imports or TypeScript path aliases.
+- Preserve the TypeScript-source distribution. Native Node consumer proof uses workspace links. An installed tarball requires a TypeScript-capable bundler or loader, not Node's built-in stripping under `node_modules`.
+- Keep this repository local: no remote, no push, no publication.
+- Preserve the downstream owner's weed unit contract: append `-volume.preStopSeconds=0` immediately after `-volume.max`. `renderUnits` was already public. The property test imports it from `alchemy-celld` and supplies the explicit instance props required by this extraction. Two command representations and their resulting digest change in the instance snapshots; no compatibility snapshot exists in this tree.
+
+## Proof
+
+`test/consumer.test.ts` creates a fresh external workspace-linked consumer. `test/consumer/surface.ts` imports only public entry points and pins 51 runtime occurrences plus six erased type imports. TypeScript checks the external consumer, then Node runs its representative pure/Effect operations. Neither stage contacts hosts or starts services.
+
+A second consumer runs against an isolated package snapshot with the `validateInstance` root export withdrawn. Both TypeScript and Node must fail specifically on that missing export. The test never edits the working tree.
+
+Run consumer proof by hand with `ALCHEMY_TELEMETRY_DISABLED=1 pnpm exec vitest run --config vitest.config.ts test/consumer.test.ts`. Run the full manual checks with `pnpm check` and `pnpm test`. This repository has no hook or automatic gate.

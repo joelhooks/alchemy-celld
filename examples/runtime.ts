@@ -9,20 +9,22 @@ import { localState } from "alchemy/State/LocalState";
 import { Config, Effect, Layer } from "effect";
 import { FetchHttpClient, HttpClient } from "effect/http";
 
-import { refuse } from "../src/files.ts";
-import { HostShell, must } from "../src/host-shell.ts";
-import { Host, layer as inventoryLayer } from "../src/host.ts";
-import { exampleStack } from "./stack.ts";
-import { settings } from "./config.ts";
-import { validateInstance } from "../src/instance.ts";
 import {
   bootstrapProbe,
   bootstrapCheck,
   diagnoseProbe,
+  Host,
+  hostLayer as inventoryLayer,
+  HostShell,
   listenerProbe,
+  must,
   raceProbe,
-} from "../src/probes.ts";
-import { layer as sshLayer } from "../src/ssh.ts";
+  refuse,
+  sshLayer,
+  validateInstance,
+} from "alchemy-celld";
+import { exampleStack } from "./stack.ts";
+import { settings } from "./config.ts";
 
 export type LiveAction =
   | "deploy"

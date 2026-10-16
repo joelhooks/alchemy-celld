@@ -2,7 +2,7 @@
 import { NodeRuntime, NodeServices } from "@effect/platform-node";
 import { Config, Effect, FileSystem, Path, Schema } from "effect";
 
-import { refuse } from "../src/files.ts";
+import { refuse } from "alchemy-celld";
 
 const Actions = Schema.Literals([
   "deploy",

@@ -1,13 +1,16 @@
 import { Stack, localState } from "alchemy";
 import { Config, Effect, Layer } from "effect";
 
-import { Celld } from "../src/celld.ts";
-import { Host, layer as inventoryLayer } from "../src/host.ts";
-import { validateInstance } from "../src/instance.ts";
-import { ObjectStore } from "../src/object-store.ts";
-import { sourceLayer } from "../src/release.ts";
-import { layer as sshLayer } from "../src/ssh.ts";
-import { startupLayer } from "../src/startup-contract.ts";
+import {
+  Celld,
+  Host,
+  hostLayer as inventoryLayer,
+  ObjectStore,
+  sourceLayer,
+  sshLayer,
+  startupContractLayer as startupLayer,
+  validateInstance,
+} from "alchemy-celld";
 import { settings } from "./config.ts";
 
 const host = inventoryLayer.pipe(Layer.orDie);
