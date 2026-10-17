@@ -1,3 +1,5 @@
+For intent, repo law, and task guidance, read [VISION.md](VISION.md), [AGENTS.md](AGENTS.md), and [skills/uncomplect/SKILL.md](skills/uncomplect/SKILL.md).
+
 - Package name: `alchemy-celld`.
 - Package version: `0.1.3`.
 - License: MIT; `LICENSE` and `LICENSE-homeflare-kit` contain the notices.
