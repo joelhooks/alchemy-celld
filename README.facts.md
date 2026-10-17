@@ -1,5 +1,5 @@
 - Package name: `alchemy-celld`.
-- Package version: `0.1.2`.
+- Package version: `0.1.3`.
 - License: MIT; `LICENSE` and `LICENSE-homeflare-kit` contain the notices.
 - The Linux and release providers in `src/` adapt `taslabs-net/homeflare-kit` at `cf20298`; its MIT notice is retained in `LICENSE-homeflare-kit`.
 - Internal runtime dependencies: `@effect/platform-node@4.0.0`, `esbuild@0.28.2`.
@@ -20,6 +20,20 @@
 - Example deploy command after host approval: `FLEET_START_APPROVED=true pnpm example deploy`.
 - Example bootstrap commands: `pnpm example bootstrap` and `pnpm example bootstrap-check`.
 - The race action additionally requires `FLEET_RACE_APPROVED=true`.
+
+## 0.1.3: safe unit updates
+
+Changed active `.slice` units are written and daemon-reloaded, never restarted. A slice restart stops its member services; changing a memory cap must not do that. Service and timer updates still restart when needed.
+
+Before restarting a changed active or activating non-slice unit, reconciliation now waits for `ActiveState` to leave `activating`. It checks once per second and refuses restart after 150 seconds. Failed or malformed state reads also refuse restart. The unit file may already have been updated and daemon-reloaded when this refusal occurs; reconciliation does not roll those writes back. Explicit `started: false` still stops a unit, including a slice.
+
+Offline coverage: `test/unit-restart-safety.test.ts`. Opt-in real user-systemd coverage: `test/systemd-live.test.ts`. Run the latter on a Linux host with a working non-root user manager:
+
+```sh
+FLEET_LIVE_NODE=local FLEET_START_APPROVED=true ALCHEMY_TELEMETRY_DISABLED=1 pnpm exec vitest run --config vitest.config.ts test/systemd-live.test.ts
+```
+
+This test always uses the local user manager, not an inventory target. `FLEET_LIVE_NODE` enables it and `FLEET_START_APPROVED=true` approves creating and removing its unique throwaway units. It changes a slice's memory cap, checks the member's unchanged InvocationID and MainPID, reads back MemoryMax, and checks activation settling before restart. It removes the units in a finalizer. Ordinary `pnpm test` skips these live tests unless both variables are set. It does not deploy celld or contact a remote host.
 
 ## Package entry points
 

@@ -56,7 +56,7 @@ afterAll(() => {
 });
 
 it("publishes required shared-runtime peers, exact development pins and only internal dependencies", () => {
-  expect(manifest.version).toBe("0.1.2");
+  expect(manifest.version).toBe("0.1.3");
   expect(manifest.peerDependencies).toEqual(peers);
   expect(manifest.peerDependenciesMeta?.effect?.optional).not.toBe(true);
   expect(manifest.peerDependenciesMeta?.alchemy?.optional).not.toBe(true);
